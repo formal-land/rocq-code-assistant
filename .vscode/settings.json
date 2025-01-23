@@ -1,7 +1,22 @@
 // Place your settings in this file to overwrite default and user settings.
 {
 	"files.exclude": {
-		"out": false // set this to true to hide the "out" folder with the compiled JS files
+		"**/*.vo": true,
+		"**/*.vok": true,
+		"**/*.vos": true,
+		"**/*.aux": true,
+		"**/*.glob": true,
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/Thumbs.db": true,
+		"**/.classpath": true,
+		"**/.project": true,
+		"**/.settings": true,
+		"**/.factorypath": true,
+		"out": false
 	},
 	"search.exclude": {
 		"out": true // set this to false to include "out" folder in search results
