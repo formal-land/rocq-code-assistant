@@ -1,28 +1,32 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+import typescriptEslint from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 
 export default [{
-    files: ["**/*.ts"],
+  files: ['**/*.ts'],
+  ignores: ['src/lib/**']
 }, {
-    plugins: {
-        "@typescript-eslint": typescriptEslint,
-    },
+  plugins: {
+    '@typescript-eslint': typescriptEslint,
+  },
 
-    languageOptions: {
-        parser: tsParser,
-        ecmaVersion: 2022,
-        sourceType: "module",
-    },
+  languageOptions: {
+    parser: tsParser,
+    ecmaVersion: 2022,
+    sourceType: 'module',
+  },
 
-    rules: {
-        "@typescript-eslint/naming-convention": ["warn", {
-            selector: "import",
-            format: ["camelCase", "PascalCase"],
-        }],
+  rules: {
+    '@typescript-eslint/naming-convention': ['warn', {
+      selector: 'import',
+      format: ['camelCase', 'PascalCase'],
+    }],
 
-        curly: "warn",
-        eqeqeq: "warn",
-        "no-throw-literal": "warn",
-        semi: "warn",
-    },
+    curly: ['warn', 'multi'],
+    eqeqeq: 'warn',
+    'no-throw-literal': 'warn',
+    semi: 'warn',
+    indent: ['warn', 2, { 'SwitchCase': 1 }],
+    quotes: ['warn', 'single'],
+    'keyword-spacing': 'warn'
+  },
 }];
