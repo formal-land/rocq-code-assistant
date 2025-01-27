@@ -8,15 +8,21 @@ import {
   OllamaModelProvider
 } from './model-providers/ollama';
 
-export function activate(context: vscode.ExtensionContext) {
+import * as utils from './utils';
 
+export function activate(context: vscode.ExtensionContext) {
   CoqLSPClient.init().then(
     () => console.log('Coq-LSP client started successfully'),
     (error) => console.log(`Coq-LSP client encountered an error while starting: ${error}`)
   );
 
-  if (true) {
-    const regOllamaModelProvider = OllamaModelProvider.init('gemma', '2b', 'http://localhost:11434/', 100, 100);
+  const isOllamaEnabled = utils.getConfBoolean('ollama-enabled', true);
+  if (isOllamaEnabled) {
+    const ollama_host_address = utils.getConfString('ollama-host-address', '127.0.0.1');
+    const ollama_host_port = utils.getConfString('ollama-host-port', '11434');
+    const ollama_host = `http://${ollama_host_address}:${ollama_host_port}`;
+  
+    const regOllamaModelProvider = OllamaModelProvider.init('gemma', '2b', ollama_host, 100, 100);
     console.log('Ollama model provider registered');
     context.subscriptions.push(regOllamaModelProvider);
   }

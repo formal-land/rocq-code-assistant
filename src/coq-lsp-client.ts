@@ -22,7 +22,7 @@ export namespace CoqLSPClient {
     };
   
     const serverOptions: ServerOptions = {
-      command: utils.getConfigurationString('coq-lsp-path', 'coq-lsp')
+      command: utils.getConfString('coq-lsp-path', 'coq-lsp')
     };
   
     client = new LanguageClient(
