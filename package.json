@@ -1,5 +1,7 @@
 {
+  "enabledApiProposals": ["chatProvider"],
   "name": "rocq-coding-assistant",
+  "publisher": "formal-land",
   "displayName": "Rocq coding assistant",
   "description": "",
   "version": "0.0.1",
@@ -16,6 +18,10 @@
       {
         "command": "rocq-coding-assistant.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "rocq-coding-assistant.tryOllama",
+        "title": "Try Ollama"
       }
     ],
     "configuration": [
@@ -29,7 +35,12 @@
           }
         }
       }
-    ]
+    ],
+    "languageModels": [
+			{
+				"vendor": "ollama"
+			}
+		]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -51,6 +62,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "ollama": "^0.5.12",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-types": "^3.17.5"
   }
