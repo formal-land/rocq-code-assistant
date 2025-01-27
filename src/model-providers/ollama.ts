@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as ollama from 'ollama';
-import { Disposable } from 'vscode-languageclient';
 
 export namespace OllamaModelProvider {
 
@@ -22,13 +21,16 @@ export namespace OllamaModelProvider {
     };
   }
 
-  export function init(modelName: string, modelTag: string, host: string, maxInputTokens: number, maxOutputTokens: number) {
+  export function init(host: string) {
+    return new ollama.Ollama({ host: host });
+  }
+
+  export function registerLanguageModel(client: ollama.Ollama, model: ollama.ModelResponse, maxInputTokens: number, maxOutputTokens: number) {
     
     async function provideLanguageModelResponse(messages: vscode.LanguageModelChatMessage[], options: vscode.LanguageModelChatRequestOptions, extensionId: string, progress: vscode.Progress<vscode.ChatResponseFragment2>, token: vscode.CancellationToken) {
       try {
-        const ollamaClient = new ollama.Ollama({ host: host });
-        const response = await ollamaClient.chat({
-          model: `${modelName}:${modelTag}`,
+        const response = await client.chat({
+          model: model.name,
           messages: messages.map(vscodeToOllamaMessage),
           stream: true
         });
@@ -71,14 +73,14 @@ export namespace OllamaModelProvider {
     };
 
     let metadata = {
-      name: modelName,
-      version: `${modelName}:${modelTag}`,
-      family: modelName,
+      name: model.name,
+      version: '',
+      family: model.details.family,
       vendor: 'ollama',
       maxInputTokens,
       maxOutputTokens
     };
 
-    return vscode.lm.registerChatModelProvider(modelName, provider, metadata);
+    return vscode.lm.registerChatModelProvider(model.name, provider, metadata);
   }
 }

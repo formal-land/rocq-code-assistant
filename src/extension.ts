@@ -10,7 +10,7 @@ import {
 
 import * as utils from './utils';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   CoqLSPClient.init().then(
     () => console.log('Coq-LSP client started successfully'),
     (error) => console.log(`Coq-LSP client encountered an error while starting: ${error}`)
@@ -18,13 +18,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   const isOllamaEnabled = utils.getConfBoolean('ollama-enabled', true);
   if (isOllamaEnabled) {
-    const ollama_host_address = utils.getConfString('ollama-host-address', '127.0.0.1');
-    const ollama_host_port = utils.getConfString('ollama-host-port', '11434');
-    const ollama_host = `http://${ollama_host_address}:${ollama_host_port}`;
+    const ollamaHostAddress = utils.getConfString('ollama-host-address', '127.0.0.1');
+    const ollamaHostPort = utils.getConfString('ollama-host-port', '11434');
+    const ollamaHost = `http://${ollamaHostAddress}:${ollamaHostPort}`;
   
-    const regOllamaModelProvider = OllamaModelProvider.init('gemma', '2b', ollama_host, 100, 100);
+    const ollamaClient = OllamaModelProvider.init(ollamaHost);
+    
+    const localModels = (await ollamaClient.list()).models; 
+    localModels.forEach(model => {
+      // TODO: set a more informative maxInputTokens and maxOutputTokens
+      const regModel = OllamaModelProvider.registerLanguageModel(ollamaClient, model, 1000, 1000);
+      context.subscriptions.push(regModel);
+    });
+
     console.log('Ollama model provider registered');
-    context.subscriptions.push(regOllamaModelProvider);
   }
 
   const regHelloWorld = vscode.commands.registerCommand('rocq-coding-assistant.helloWorld', () => {
