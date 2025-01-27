@@ -1,5 +1,7 @@
 {
-  "enabledApiProposals": ["chatProvider"],
+  "enabledApiProposals": [
+    "chatProvider"
+  ],
   "name": "rocq-coding-assistant",
   "publisher": "formal-land",
   "displayName": "Rocq coding assistant",
@@ -57,10 +59,10 @@
       }
     ],
     "languageModels": [
-			{
-				"vendor": "ollama"
-			}
-		]
+      {
+        "vendor": "ollama"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
