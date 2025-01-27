@@ -11,27 +11,29 @@ import {
 import * as utils from './utils';
 
 export async function activate(context: vscode.ExtensionContext) {
-  CoqLSPClient.init().then(
-    () => console.log('Coq-LSP client started successfully'),
-    (error) => console.log(`Coq-LSP client encountered an error while starting: ${error}`)
-  );
+  try {
+    await CoqLSPClient.init();
+  } catch (error) {
+    console.log(`Coq-LSP client encountered an error while starting: ${error}`);
+  }
 
   const isOllamaEnabled = utils.getConfBoolean('ollama-enabled', true);
   if (isOllamaEnabled) {
+    // TODO: what if ollama is enabled after that the extension is run?
     const ollamaHostAddress = utils.getConfString('ollama-host-address', '127.0.0.1');
     const ollamaHostPort = utils.getConfString('ollama-host-port', '11434');
     const ollamaHost = `http://${ollamaHostAddress}:${ollamaHostPort}`;
   
     const ollamaClient = OllamaModelProvider.init(ollamaHost);
+    console.log('Ollama client started');
     
     const localModels = (await ollamaClient.list()).models; 
     localModels.forEach(model => {
       // TODO: set a more informative maxInputTokens and maxOutputTokens
       const regModel = OllamaModelProvider.registerLanguageModel(ollamaClient, model, 1000, 1000);
       context.subscriptions.push(regModel);
+      console.log(`Ollama model ${model.name} registered`);
     });
-
-    console.log('Ollama model provider registered');
   }
 
   const regHelloWorld = vscode.commands.registerCommand('rocq-coding-assistant.helloWorld', () => {
@@ -41,12 +43,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const regTryOllama = vscode.commands.registerCommand('rocq-coding-assistant.tryOllama', async () => {
     console.log(await vscode.lm.selectChatModels());
-    const [model] = await vscode.lm.selectChatModels({ vendor: 'ollama' });
+    const [model] = await vscode.lm.selectChatModels({vendor: 'ollama'});
     console.log(model);
 
     let chatResponse: vscode.LanguageModelChatResponse | undefined;
 
-    const messages = [ vscode.LanguageModelChatMessage.User('What\'s a lambda term?') ];
+    const messages = [vscode.LanguageModelChatMessage.User('What\'s a lambda term?')];
 
     try {
       chatResponse = await model.sendRequest(
@@ -81,8 +83,10 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  CoqLSPClient.stop().then(
-    () => console.log('Coq-LSP client stopped succesfully'),
-    (error) => (`Coq-LSP client enocuntered an error while stopping: ${error}`)
-  );
+  try {
+    CoqLSPClient.stop();
+    console.log('Coq-LSP client stopped');
+  } catch (error) {
+    console.error(`Coq-LSP client enocuntered an error while stopping: ${error}`);
+  }
 }
