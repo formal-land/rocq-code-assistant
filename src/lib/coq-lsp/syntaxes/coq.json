@@ -3,20 +3,26 @@
   "name": "Coq",
   "patterns": [
     {
-      "begin": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+((\\p{L}|[_\\u00A0])(\\p{L}|[0-9_\\u00A0'])*)",
-      "end": "Qed",
-      "name": "theorem",
-      "patterns": [
-        { "include": "$self" }
-      ],
-      "captures": {
+      "begin": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+((?:\\p{L}|[_\\u00A0])(?:\\p{L}|[0-9_\\00A0'])*)",
+      "beginCaptures": {
         "1": {
           "name": "keyword.source.coq"
         },
         "2": {
           "name": "entity.name.function.theorem.coq"
         }
-      }
+      },
+      "end": "\\b(Qed|Defined|Save|Abort(\\s+All)?|Admitted)\\.",
+      "endCaptures": {
+        "1": {
+          "name": "keyword.source.coq"
+        }
+      },
+      "comment": "Proof block",
+      "name": "meta.proof.coq",
+      "patterns": [
+        { "include": "$self" }
+      ]
     },
     {
       "match": "\\b(From|Require|Import|Export|Local|Global|Include|Load|Dependency)\\b",
