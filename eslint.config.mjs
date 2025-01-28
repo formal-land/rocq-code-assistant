@@ -21,7 +21,7 @@ export default [{
       format: ['camelCase', 'PascalCase']
     }],
 
-    curly: ['warn', 'multi'],
+    curly: ['warn', 'multi', 'consistent'],
     eqeqeq: 'warn',
     'no-throw-literal': 'warn',
     semi: 'warn',
