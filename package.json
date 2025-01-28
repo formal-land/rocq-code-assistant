@@ -1,7 +1,4 @@
 {
-  "enabledApiProposals": [
-    "chatProvider"
-  ],
   "name": "rocq-coding-assistant",
   "publisher": "formal-land",
   "displayName": "Rocq coding assistant",
@@ -13,7 +10,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:coq"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -24,8 +23,20 @@
       {
         "command": "rocq-coding-assistant.tryOllama",
         "title": "Try Ollama"
+      },
+      {
+        "command": "rocq-coding-assistant.solve",
+        "title": "Solve with rocq-coding-assistant"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "rocq-coding-assistant.solve",
+          "when": "editorLangId == coq"
+        }
+      ]
+    },
     "configuration": [
       {
         "title": "Rocq coding assistant",
@@ -64,6 +75,9 @@
       }
     ]
   },
+  "enabledApiProposals": [
+    "chatProvider"
+  ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

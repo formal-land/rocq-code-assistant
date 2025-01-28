@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import * as utils from './utils';
+import * as tok from './tokenizer';
 import { CoqLSPClient } from './coq-lsp-client';
 import { OllamaModelProvider } from './model-providers/ollama';
+
 
 export async function activate(context: vscode.ExtensionContext) {
   try {
@@ -28,6 +30,36 @@ export async function activate(context: vscode.ExtensionContext) {
       console.log(`Ollama model ${model.name} registered`);
     });
   }
+
+  const coqTokenizer = tok.create(
+    context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
+    context.asAbsolutePath('./src/lib/coq-lsp/syntaxes/coq.json'),
+    'source.coq'
+  );
+
+  const regSolve = vscode.commands.registerCommand('rocq-coding-assistant.solve', async () => {
+    const editor = vscode.window.activeTextEditor;
+    
+    if (!editor) return;
+
+    const selection = editor.selection;
+    const selectionLine = editor.document.lineAt(selection.anchor.line).text;
+    const tokenizedSelectionLine = (await coqTokenizer.tokenize(selectionLine))[0];
+    
+    const isSelectionTheorem = tokenizedSelectionLine.tokens.some(token => 
+      token.startIndex === selection.anchor.character && 
+      token.endIndex === selection.end.character && 
+      token.scopes.includes('entity.name.function.theorem.coq')
+    );
+
+    if (!isSelectionTheorem) {
+      vscode.window.showErrorMessage('No theorem selected'); 
+      return;
+    } else {
+      vscode.window.showInformationMessage('Theorem');
+    }
+  });
+  context.subscriptions.push(regSolve);
 
   const regHelloWorld = vscode.commands.registerCommand('rocq-coding-assistant.helloWorld', () => {
     vscode.window.showInformationMessage('Hello World from Rocq coding assistant!');
