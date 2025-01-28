@@ -1,5 +1,7 @@
 {
-  "enabledApiProposals": ["chatProvider"],
+  "enabledApiProposals": [
+    "chatProvider"
+  ],
   "name": "rocq-coding-assistant",
   "publisher": "formal-land",
   "displayName": "Rocq coding assistant",
@@ -57,10 +59,10 @@
       }
     ],
     "languageModels": [
-			{
-				"vendor": "ollama"
-			}
-		]
+      {
+        "vendor": "ollama"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -84,6 +86,8 @@
   "dependencies": {
     "ollama": "^0.5.12",
     "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver-types": "^3.17.5"
+    "vscode-languageserver-types": "^3.17.5",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.2.0"
   }
 }
