@@ -1,36 +1,64 @@
 // SYNTAX TEST "source.coq"
 
 Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
-//    ^^^^^^^^^ meta.proof.coq entity.name.function.theorem.coq
+// <----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+//    ^^^^^^^^^ entity.name.function.theorem.coq
+//                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ - entity.name.function.theorem.coq
+//   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq
 Proof.
-// <----- meta.proof.coq keyword.source.coq
+//<----- meta.proof.coq meta.proof.body.coq keyword.source.coq
   intros A B HA HB. split.
+//^^^^^^ support.function.builtin.ltac
+//^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
   - apply HA.
-//  ^^^^ meta.proof.coq support.function.builtin.ltac
+//  ^^^^^ support.function.builtin.ltac
+//^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
   - apply HB.
-//        ^^ meta.proof.coq
-Qed.
-//<--- keyword.source.coq
+//  ^^^^^ support.function.builtin.ltac
+//^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+Qed. (* Outside of proof *)
+// <--- keyword.source.coq
+// <---- meta.proof.coq meta.proof.body.coq
+//   ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
 
-// -meta.proof.coq
+(* Outside of proof *)
+// <---------------------- - meta.proof.coq meta.proof.body.coq
 
-Theorem and_commut : forall P Q : Prop,
-//      ^^^^^^^^^^ meta.proof.coq entity.name.function.theorem.coq
-  P /\ Q -> Q /\ P.
-//     ^ meta.proof.coq
+Theorem ex_falso_quodlibet : forall (P : Prop), False -> P.
+// <----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+//      ^^^^^^^^^^^^^^^^^^ entity.name.function.theorem.coq
+//     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq
 Proof.
-  intros P Q [HP HQ].
-  split.
-    - (* left *) apply HQ.
-    - (* right *) apply HP.  Qed.
-//    ^^^^^^^^^^^ meta.proof.coq comment.block.coq
-//                                ^ -meta.proof.coq
-//                           ^^^ keyword.source.coq
-
-Theorem ex_falso_quodlibet : forall (P:Prop), False -> P.
-//      ^^^^^^^^^^^^^^^^^^ meta.proof.coq entity.name.function.theorem.coq
-//                           ^^^^^^^^^^^^^^^^ meta.proof.coq
-Proof.
-  (* WORKED IN CLASS *)
+//<----- meta.proof.coq meta.proof.body.coq keyword.source.coq
   intros P contra.
-  destruct contra.  Qed.
+//^^^^^^ support.function.builtin.ltac
+//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+  destruct contra.  Qed. (* Outside of proof *)
+//^^^^^^^^ support.function.builtin.ltac
+//                  ^^^ keyword.source.coq
+//^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+//                       ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
+
+Theorem
+// <------- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+  and_commut : forall P Q : Prop,
+//^^^^^^^^^^ entity.name.function.theorem.coq
+//             ^^^^^^^^^^^^^^^^^^ - entity.name.function.theorem.coq
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq 
+  P /\ Q -> Q /\ P.
+//^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq 
+Proof.
+//<----- meta.proof.coq meta.proof.body.coq keyword.source.coq
+  intros P Q [HP HQ].
+//^^^^^^ support.function.builtin.ltac
+//^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+  split.
+//^^^^^ support.function.builtin.ltac
+    - (* left *) apply HQ.
+//               ^^^^^ support.function.builtin.ltac
+//  ^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+    - (* right *) apply HP.  Qed.
+//                ^^^^^ support.function.builtin.ltac
+//    ^^^^^^^^^^^ meta.proof.coq
+//                           ^^^ keyword.source.coq
+//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
