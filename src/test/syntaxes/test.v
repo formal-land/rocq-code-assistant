@@ -1,4 +1,4 @@
-// SYNTAX TEST "source.coq"
+// SYNTAX TEST "ext.source.coq"
 
 Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
 // <----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
@@ -56,6 +56,7 @@ Proof.
 //^^^^^ support.function.builtin.ltac
     - (* left *) apply HQ.
 //               ^^^^^ support.function.builtin.ltac
+//    ^^^^^^^^^^ comment.block.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
     - (* right *) apply HP.  Qed.
 //                ^^^^^ support.function.builtin.ltac

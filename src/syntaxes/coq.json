@@ -161,10 +161,8 @@
       "comment": "Vernacular Show commands",
       "name": "keyword.source.coq"
     },
-    {
-      "match": "\\b(Proof(\\s+(Mode|using|with))?|Qed|Defined|Save|Abort(\\s+All)?|Undo(\\s+To)?|Restart|Focus|Unfocus|Unfocused|Unshelve)\\b",
-      "comment": "Proof keywords",
-      "name": "keyword.source.coq"
+    { 
+      "include": "#proof_keywords" 
     },
     {
       "match": "\\b(Extract\\s+(Constant|Inductive|Inlined\\s+Constant)|Separate\\s+Extraction|Recursive\\s+Extraction(\\s+Library)?|Extraction(\\s+(Blacklist|Implicit|Inline|Language(\\s+(OCaml|Haskell|Scheme|JSON))?|Library|NoInline|TestCompile))?)\\b",
@@ -255,10 +253,8 @@
       "comment": "Gallina keywords",
       "name": "keyword.control.gallina"
     },
-    {
-      "match": "\\b(intro|intros|revert|induction|destruct|auto|eauto|tauto|eassumption|apply|eapply|assumption|constructor|econstructor|reflexivity|inversion|injection|assert|split|esplit|omega|fold|unfold|specialize|rewrite|erewrite|change|symmetry|refine|simpl|intuition|firstorder|generalize|idtac|exist|exists|eexists|elim|eelim|rename|subst|congruence|trivial|left|right|set|pose|discriminate|clear|clearbody|contradict|contradiction|exact|dependent|remember|case|easy|unshelve|pattern|transitivity|etransitivity|f_equal|exfalso|replace|abstract|cycle|swap|revgoals|shelve|unshelve|typeclasses\\s+eauto)\\b",
-      "comment": "Ltac builtins",
-      "name": "support.function.builtin.ltac"
+    { 
+      "include": "#ltac_builtins" 
     },
     {
       "applyEndPatternLast": 1,
@@ -333,6 +329,16 @@
         }
       },
       "name": "string.quoted.double.coq"
+    },
+    "proof_keywords": {
+      "match": "\\b(Proof(\\s+(Mode|using|with))?|Qed|Defined|Save|Abort(\\s+All)?|Undo(\\s+To)?|Restart|Focus|Unfocus|Unfocused|Unshelve)\\b",
+      "comment": "Proof keywords",
+      "name": "keyword.source.coq"
+    },
+    "ltac_builtins": {
+      "match": "\\b(intro|intros|revert|induction|destruct|auto|eauto|tauto|eassumption|apply|eapply|assumption|constructor|econstructor|reflexivity|inversion|injection|assert|split|esplit|omega|fold|unfold|specialize|rewrite|erewrite|change|symmetry|refine|simpl|intuition|firstorder|generalize|idtac|exist|exists|eexists|elim|eelim|rename|subst|congruence|trivial|left|right|set|pose|discriminate|clear|clearbody|contradict|contradiction|exact|dependent|remember|case|easy|unshelve|pattern|transitivity|etransitivity|f_equal|exfalso|replace|abstract|cycle|swap|revgoals|shelve|unshelve|typeclasses\\s+eauto)\\b",
+      "comment": "Ltac builtins",
+      "name": "support.function.builtin.ltac"
     }
   },
   "scopeName": "source.coq",

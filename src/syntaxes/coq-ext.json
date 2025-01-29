@@ -1,0 +1,41 @@
+{
+  "fileTypes": ["v"],
+  "name": "Coq",
+  "patterns": [
+    { "include": "#proof" }
+  ],
+  "repository": {
+    "proof": {
+      "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition))",
+      "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "name": "meta.proof.coq",
+      "patterns": [
+        { "include": "#proof_name" },
+        { "include": "#proof_body" },
+        { "include": "#theorem_keywords" },
+        { "include": "source.coq#block_comment" }
+      ]
+    },
+    "proof_name": {
+      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition))",
+      "end": "(?=\\:)",
+      "name": "entity.name.function.theorem.coq"
+    },
+    "proof_body": {
+      "begin": "(?=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
+      "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "name": "meta.proof.body.coq",
+      "patterns": [
+        { "include": "source.coq#proof_keywords" },
+        { "include": "source.coq#ltac_builtins" },
+        { "include": "source.coq#block_comment" }
+      ]
+    },
+    "theorem_keywords" : {
+      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)",
+      "name": "keyword.source.coq"
+    }
+  },
+  "scopeName": "ext.source.coq",
+  "uuid": "7d81e50b-454d-47ed-b365-d0d57440f6e9"
+}
