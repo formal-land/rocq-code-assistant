@@ -8,11 +8,13 @@
     "proof": {
       "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition))",
       "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "comment": "Defines a proof block",
       "name": "meta.proof.coq",
       "patterns": [
-        { "include": "#proof_name" },
-        { "include": "#proof_body" },
         { "include": "#theorem_keywords" },
+        { "include": "#proof_name" },
+        { "include": "#proof_type" },
+        { "include": "#proof_body" },
         { "include": "source.coq#block_comment" }
       ]
     },
@@ -20,6 +22,11 @@
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition))",
       "end": "(?=\\:)",
       "name": "entity.name.function.theorem.coq"
+    },
+    "proof_type": {
+      "begin": "(?<=\\:)",
+      "end": "(?=\\.)",
+      "name": "storage.type.function.theorem.coq"
     },
     "proof_body": {
       "begin": "(?=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
