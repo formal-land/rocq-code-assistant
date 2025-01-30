@@ -40,6 +40,9 @@ Proof.
 //^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
 //                       ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
 
+(* Outside of proof *)
+// <---------------------- - meta.proof.coq meta.proof.body.coq
+
 Theorem
 // <------- meta.proof.coq keyword.source.coq - meta.proof.body.coq
   and_commut : forall P Q : Prop,
@@ -64,3 +67,20 @@ Proof.
 //    ^^^^^^^^^^^ meta.proof.coq
 //                           ^^^ keyword.source.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+
+(* Outside of proof *)
+// <---------------------- - meta.proof.coq meta.proof.body.coq
+
+Theorem and_commut :
+// <------- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+//      ^^^^^^^^^^ entity.name.function.theorem.coq
+//^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq 
+  forall P Q : Prop,
+//^^^^^^^^^^^^^^^^^^ meta.proof.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
+  P /\ Q -> Q /\ P.
+//^^^^^^^^^^^^^^^^ meta.proof.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
+(* Inside of proof *)
+// <--------------------- meta.proof.coq - meta.proof.body.coq
+Proof.
+(* Inside of proof body *)
+// <-------------------------- meta.proof.coq meta.proof.body.coq
