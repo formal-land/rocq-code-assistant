@@ -4,11 +4,15 @@ import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
 
 export interface Tokenizer {
-  tokenize(text: string): Promise<vsctm.ITokenizeLineResult[]>
+  tokenize(text: string, scopName: string): Promise<vsctm.ITokenizeLineResult[]>
 }
 
-// Creates a single grammar tokenizer (may be extended in future to handle multiple grammars)
-export function create(onigurumaWASMPath: string, grammarPath: string, initialScopeName: string): Tokenizer {
+export interface GrammarReference {
+  scopeName: string,
+  path: string
+}
+
+export function create(onigurumaWASMPath: string, grammars: GrammarReference[]): Tokenizer {
   const wasmBin = fs.readFileSync(onigurumaWASMPath).buffer;
   const vscodeOnigurumaLib = oniguruma.loadWASM(wasmBin).then(() => {
     return {
@@ -20,15 +24,17 @@ export function create(onigurumaWASMPath: string, grammarPath: string, initialSc
   const registry = new vsctm.Registry({
     onigLib: vscodeOnigurumaLib,
     loadGrammar: async (scopeName) => {
-      if (scopeName !== initialScopeName) return Promise.reject(`Unknown scope ${scopeName}`);
+      const grammar = grammars.find(gramRef => gramRef.scopeName === scopeName);
 
-      const data = await fsp.readFile(grammarPath);
-      return vsctm.parseRawGrammar(data.toString(), grammarPath);
+      if (!grammar) return Promise.reject(`Unknown scope ${scopeName}`);
+
+      const data = await fsp.readFile(grammar.path);
+      return vsctm.parseRawGrammar(data.toString(), grammar.path);
     }
   });
 
-  async function tokenize(text: string) {
-    const grammar = await registry.loadGrammar(initialScopeName);
+  async function tokenize(text: string, scopeName: string) {
+    const grammar = await registry.loadGrammar(scopeName);
 
     if (!grammar) return Promise.reject('Cannot load grammar');
 
