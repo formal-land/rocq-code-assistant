@@ -20,12 +20,12 @@
     },
     "proof_name": {
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+)",
-      "end": "(?=\\s+\\:)",
+      "end": "(?=\\s*\\:)",
       "name": "entity.name.function.theorem.coq"
     },
     "proof_type": {
-      "begin": "(?<=\\:)",
-      "end": "(?=\\.)",
+      "begin": "(?<=\\:\\s*)",
+      "end": "(?=\\s*\\.)",
       "name": "storage.type.function.theorem.coq"
     },
     "proof_body": {
