@@ -224,9 +224,7 @@
       "name": "keyword.source.coq"
     },
     {
-      "match": "\\b(admit|Admitted)\\b",
-      "comment": "Admits are bad",
-      "name": "invalid.illegal.admit.coq"
+      "include": "#admits"
     },
     {
       "match": ":|\\||=|<|>|\\*|\\+|-|\\{|\\}|≠|∨|∧|↔|¬|→|≤|≥",
@@ -339,6 +337,11 @@
       "match": "\\b(intro|intros|revert|induction|destruct|auto|eauto|tauto|eassumption|apply|eapply|assumption|constructor|econstructor|reflexivity|inversion|injection|assert|split|esplit|omega|fold|unfold|specialize|rewrite|erewrite|change|symmetry|refine|simpl|intuition|firstorder|generalize|idtac|exist|exists|eexists|elim|eelim|rename|subst|congruence|trivial|left|right|set|pose|discriminate|clear|clearbody|contradict|contradiction|exact|dependent|remember|case|easy|unshelve|pattern|transitivity|etransitivity|f_equal|exfalso|replace|abstract|cycle|swap|revgoals|shelve|unshelve|typeclasses\\s+eauto)\\b",
       "comment": "Ltac builtins",
       "name": "support.function.builtin.ltac"
+    },
+    "admits": {
+      "match": "\\b(admit|Admitted)\\b",
+      "comment": "Admits are bad",
+      "name": "invalid.illegal.admit.coq"
     }
   },
   "scopeName": "source.coq",

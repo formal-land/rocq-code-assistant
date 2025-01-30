@@ -35,7 +35,8 @@
       "patterns": [
         { "include": "source.coq#proof_keywords" },
         { "include": "source.coq#ltac_builtins" },
-        { "include": "source.coq#block_comment" }
+        { "include": "source.coq#block_comment" },
+        { "include": "source.coq#admits" }
       ]
     },
     "theorem_keywords" : {

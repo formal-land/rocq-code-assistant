@@ -71,6 +71,19 @@ Proof.
 (* Outside of proof *)
 // <---------------------- - meta.proof.coq meta.proof.body.coq
 
+Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
+Proof.
+  intros A B HA HB. split.
+  { admit. }
+//  ^^^^^ meta.proof.coq meta.proof.body.coq invalid.illegal.admit.coq 
+  { admit. }
+//  ^^^^^ meta.proof.coq meta.proof.body.coq invalid.illegal.admit.coq
+Admitted.
+// <-------- meta.proof.coq meta.proof.body.coq invalid.illegal.admit.coq
+
+(* Outside of proof *)
+// <---------------------- - meta.proof.coq meta.proof.body.coq
+
 Theorem and_commut :
 // <------- meta.proof.coq keyword.source.coq - meta.proof.body.coq
 //      ^^^^^^^^^^ entity.name.function.theorem.coq
