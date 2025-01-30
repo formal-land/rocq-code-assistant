@@ -1,6 +1,6 @@
 {
   "fileTypes": ["v"],
-  "name": "Coq",
+  "name": "Coq proofs",
   "patterns": [
     { "include": "#proof" }
   ],
@@ -44,6 +44,6 @@
       "name": "keyword.source.coq"
     }
   },
-  "scopeName": "ext.source.coq",
+  "scopeName": "source.coq.proof",
   "uuid": "7d81e50b-454d-47ed-b365-d0d57440f6e9"
 }
