@@ -1,14 +1,7 @@
 import * as vscode from 'vscode';
-
-import {
-  CoqLSPClient
-} from './coq-lsp-client';
-
-import {
-  OllamaModelProvider
-} from './model-providers/ollama';
-
 import * as utils from './utils';
+import { CoqLSPClient } from './coq-lsp-client';
+import { OllamaModelProvider } from './model-providers/ollama';
 
 export async function activate(context: vscode.ExtensionContext) {
   try {

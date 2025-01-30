@@ -3,11 +3,7 @@ import {
   LanguageClientOptions,
   ServerOptions
 } from 'vscode-languageclient/node';
-
-import {
-  CoqSelector
-} from './lib/coq-lsp/config';
-
+import { CoqSelector } from './lib/coq-lsp/config';
 import * as utils from './utils';
 
 export namespace CoqLSPClient {

@@ -59,13 +59,15 @@ export namespace OllamaModelProvider {
               default:
                 throw new vscode.LanguageModelError(error.message);
             }
-        } else throw new vscode.LanguageModelError(); // generic error
+        } else {
+          throw new vscode.LanguageModelError(); // generic error
+        }
       }
-    };
+    }
 
     function provideTokenCount(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken): Thenable<number> {
       throw new Error('Method not implemented.');
-    };
+    }
 
     let provider: vscode.LanguageModelChatProvider = {
       provideLanguageModelResponse,
