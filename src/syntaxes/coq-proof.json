@@ -2,6 +2,7 @@
   "fileTypes": ["v"],
   "name": "Coq proofs",
   "patterns": [
+    { "include": "source.coq#block_comment" },
     { "include": "#proof" }
   ],
   "repository": {
