@@ -19,8 +19,8 @@
       ]
     },
     "proof_name": {
-      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition))",
-      "end": "(?=\\:)",
+      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+)",
+      "end": "(?=\\s+\\:)",
       "name": "entity.name.function.theorem.coq"
     },
     "proof_type": {
