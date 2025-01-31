@@ -17,3 +17,12 @@ export function getConfString(name: string, def: string) {
   if (typeof value === 'string') return value;
   else return def;
 }
+
+export function zip<T, U>(first: Array<T>, second: Array<U>): Array<[T, U]> {
+  const minLen = first.length < second.length ? first.length : second.length;
+
+  const zipped = new Array<[T, U]>;
+  for (let i = 0; i < minLen; i++)
+    zipped.push([first[i], second[i]]);
+  return zipped;
+}
