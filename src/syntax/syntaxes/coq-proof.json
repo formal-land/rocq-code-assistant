@@ -12,12 +12,16 @@
       "comment": "Defines a proof block",
       "name": "meta.proof.coq",
       "patterns": [
-        { "include": "#theorem_keywords" },
+        { "include": "#proof_keywords" },
         { "include": "#proof_name" },
         { "include": "#proof_type" },
         { "include": "#proof_body" },
         { "include": "source.coq#block_comment" }
       ]
+    },
+    "proof_keywords" : {
+      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)",
+      "name": "keyword.source.coq"
     },
     "proof_name": {
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+)",
@@ -39,10 +43,6 @@
         { "include": "source.coq#block_comment" },
         { "include": "source.coq#admits" }
       ]
-    },
-    "theorem_keywords" : {
-      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)",
-      "name": "keyword.source.coq"
     }
   },
   "scopeName": "source.coq.proof",
