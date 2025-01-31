@@ -4,7 +4,7 @@ import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
 
 export interface Tokenizer {
-  tokenize(text: string, scopName: string): Promise<vsctm.ITokenizeLineResult[]>
+  tokenize(text: string, scopeName: string): Promise<vsctm.ITokenizeLineResult[]>
 }
 
 export interface GrammarReference {
