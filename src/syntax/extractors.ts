@@ -49,6 +49,13 @@ export function extractProofAtPosition(position: vscode.Position, textLines: str
 }
 
 function proofFromTokenizedProofLines(textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]): ProofMeta {
+  const keyword = tokenizedLines
+    .flatMap((tokenizedLine, idx) => 
+      tokenizedLine.tokens
+        .filter(token => token.scopes.includes('keyword.function.theorem.coq'))
+        .map(token => tokenText(token, textLines[idx])))
+    .join(' ');
+  
   const name = tokenizedLines
     .flatMap((tokenizedLine, idx) => 
       tokenizedLine.tokens
@@ -80,7 +87,7 @@ function proofFromTokenizedProofLines(textLines: string[], tokenizedLines: vsctm
           tokenText(token, textLines[idx]) === 'admit')
         .map(token => new vscode.Range(idx, token.startIndex, idx, token.endIndex)));
   
-  return { name, type, body, admits };
+  return { keyword, name, type, body, admits };
 }
 
 function tokenText(token: vsctm.IToken, textLine: string) {

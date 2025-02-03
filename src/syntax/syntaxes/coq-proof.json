@@ -21,7 +21,7 @@
     },
     "proof_keywords" : {
       "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)",
-      "name": "keyword.source.coq"
+      "name": "keyword.source.coq keyword.function.theorem.coq"
     },
     "proof_name": {
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+)",
