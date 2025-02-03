@@ -1,14 +1,14 @@
 import * as vsctm from 'vscode-textmate';
 import * as vscode from 'vscode';
 import * as utils from '../utils';
-import { Proof } from './syntaxes/coq-proof';
+import { ProofMeta } from './syntaxes/coq-proof';
 
 export function extractProofFromName(proofName: string, textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]) {
   const firstLineIdx = utils.zip(textLines, tokenizedLines).findIndex(([textLine, tokenizedLine]) => 
     tokenizedLine.tokens.some(token =>
       token.scopes.includes('meta.proof.coq') &&
       token.scopes.includes('entity.name.function.theorem.coq') &&
-      tokenText(textLine, token) === proofName.trim()
+      tokenText(token, textLine) === proofName.trim()
     )
   );
 
@@ -48,29 +48,41 @@ export function extractProofAtPosition(position: vscode.Position, textLines: str
   );
 }
 
-function tokenText(textLine: string, token: vsctm.IToken) {
-  return textLine.substring(token.startIndex, token.endIndex).trim();
+function proofFromTokenizedProofLines(textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]): ProofMeta {
+  const name = tokenizedLines
+    .flatMap((tokenizedLine, idx) => 
+      tokenizedLine.tokens
+        .filter(token => token.scopes.includes('entity.name.function.theorem.coq'))
+        .map(token => tokenText(token, textLines[idx])))
+    .join(' ');
+
+  const type = tokenizedLines
+    .flatMap((tokenizedLine, idx) => 
+      tokenizedLine.tokens
+        .filter(token => token.scopes.includes('storage.type.function.theorem.coq'))
+        .map(token => tokenText(token, textLines[idx])))
+    .join(' ');
+
+  const body = tokenizedLines
+    .map((tokenizedLine, idx) => 
+      tokenizedLine.tokens
+        .filter(token => token.scopes.includes('meta.proof.body.coq'))
+        .map(token => tokenText(token, textLines[idx]))
+        .join(' '))
+    .filter(textLine => textLine.length !== 0)
+    .join('\n');
+
+  const admits = tokenizedLines
+    .flatMap((tokenizedLine, idx) => 
+      tokenizedLine.tokens
+        .filter(token => 
+          token.scopes.includes('invalid.illegal.admit.coq') && 
+          tokenText(token, textLines[idx]) === 'admit')
+        .map(token => new vscode.Range(idx, token.startIndex, idx, token.endIndex)));
+  
+  return { name, type, body, admits };
 }
 
-function proofFromTokenizedProofLines(textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]): Proof {
-  const tokens: [vsctm.IToken, number][] = tokenizedLines
-    .map((line, idx) => line.tokens.map<[vsctm.IToken, number]>(token => [token, idx]))
-    .flat(1);
-
-  const name = tokens
-    .filter(([token, ]) => token.scopes.includes('entity.name.function.theorem.coq'))
-    .map(([token, line]) => tokenText(textLines[line], token))
-    .join(' ');
-
-  const type = tokens
-    .filter(([token, ]) => token.scopes.includes('storage.type.function.theorem.coq'))
-    .map(([token, line]) => tokenText(textLines[line], token))
-    .join(' ');
-
-  const body = tokens
-    .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
-    .map(([token, line]) => tokenText(textLines[line], token))
-    .join(' ');
-
-  return { name, type, body };
+function tokenText(token: vsctm.IToken, textLine: string) {
+  return textLine.substring(token.startIndex, token.endIndex).trim();
 }
