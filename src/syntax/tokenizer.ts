@@ -12,6 +12,8 @@ export interface GrammarReference {
   path: string
 }
 
+const NEW_LINE_REGEX = /\r?\n|\r|\n/g;
+
 export function create(onigurumaWASMPath: string, grammars: GrammarReference[]): Tokenizer {
   const wasmBin = fs.readFileSync(onigurumaWASMPath).buffer;
   const vscodeOnigurumaLib = oniguruma.loadWASM(wasmBin).then(() => {
@@ -38,7 +40,7 @@ export function create(onigurumaWASMPath: string, grammars: GrammarReference[]):
 
     if (!grammar) return Promise.reject('Cannot load grammar');
 
-    const lines = text.split(/\r?\n|\r|\n/g);
+    const lines = text.split(NEW_LINE_REGEX);
     let ruleStack = vsctm.INITIAL;
     const tokenizedLines = new Array<vsctm.ITokenizeLineResult>;
     lines.forEach((line) => {
@@ -46,6 +48,7 @@ export function create(onigurumaWASMPath: string, grammars: GrammarReference[]):
       ruleStack = tokenizedLine.ruleStack;
       tokenizedLines.push(tokenizedLine);
     });
+    
     return tokenizedLines;
   }
 
