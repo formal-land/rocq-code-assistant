@@ -1,40 +1,25 @@
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions
-} from 'vscode-languageclient/node';
-import { CoqSelector } from './lib/coq-lsp/config';
 import * as utils from './utils';
+import { RequestType, LanguageClient } from 'vscode-languageclient/node';
+import { CoqSelector } from './lib/coq-lsp/config';
+import { GoalRequest, GoalAnswer, PpString } from './lib/coq-lsp/types';
 
-export namespace CoqLSPClient {
-  let client: LanguageClient | undefined;
+export const goalReq = new RequestType<GoalRequest, GoalAnswer<PpString>, void>(
+  'proof/goals'
+);
 
-  export function init() { 
-    if (client && client.isRunning()) 
-      return Promise.resolve();
-
-    const clientOptions: LanguageClientOptions = {
-      documentSelector: CoqSelector.owned
-    };
+export function create() { 
+  const clientOptions = {
+    documentSelector: CoqSelector.owned
+  };
   
-    const serverOptions: ServerOptions = {
-      command: utils.getConfString('coq-lsp-path', 'coq-lsp')
-    };
+  const serverOptions = {
+    command: utils.getConfString('coq-lsp-path', 'coq-lsp')
+  };
   
-    client = new LanguageClient(
-      'rocq-coding-assistant-client',
-      'Rocq coding assistant client',
-      serverOptions,
-      clientOptions
-    );
-  
-    return client.start();
-  }
-
-  export function stop() {
-    if (client && client.isRunning()) 
-      return client.dispose();
-    else 
-      return Promise.resolve();
-  }
+  return new LanguageClient(
+    'rocq-coding-assistant-client',
+    'Rocq coding assistant client',
+    serverOptions,
+    clientOptions
+  );
 }
