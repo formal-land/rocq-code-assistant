@@ -8,5 +8,6 @@ export interface Proof {
 }
 
 export interface ProofMeta extends Proof {
-  admits: vscode.Range[]
+  location: vscode.Range,
+  admitsLocations: vscode.Range[]
 }
