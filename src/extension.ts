@@ -1,70 +1,77 @@
 import * as vscode from 'vscode';
+import * as lsp from 'vscode-languageserver-types';
+import { LanguageClient, VersionedTextDocumentIdentifier } from 'vscode-languageclient/node';
 import * as utils from './utils';
-import * as tok from './tokenizer';
-import { CoqLSPClient } from './coq-lsp-client';
-import { OllamaModelProvider } from './model-providers/ollama';
+import * as tokenizer from './syntax/tokenizer';
+import * as cpqLSP from './coq-lsp-client';
+import * as ollamaModelProvider from './model-providers/ollama';
+import * as extractors from './syntax/extractors';
 
+let coqLSPClient: LanguageClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
-  try {
-    await CoqLSPClient.init();
-  } catch (error) {
-    console.log(`Coq-LSP client encountered an error while starting: ${error}`);
-  }
+  coqLSPClient = cpqLSP.create();
+  coqLSPClient.start();
 
   const isOllamaEnabled = utils.getConfBoolean('ollama-enabled', true);
   if (isOllamaEnabled) {
     // TODO: what if ollama is enabled after that the extension is run?
-    const ollamaHostAddress = utils.getConfString('ollama-host-address', '127.0.0.1');
+    const ollamaHostAddress = utils.getConfString('ollama-host-address', '172.28.176.1');
     const ollamaHostPort = utils.getConfString('ollama-host-port', '11434');
     const ollamaHost = `http://${ollamaHostAddress}:${ollamaHostPort}`;
   
-    const ollamaClient = OllamaModelProvider.init(ollamaHost);
+    const ollamaClient = ollamaModelProvider.init(ollamaHost);
     console.log('Ollama client started');
     
     const localModels = (await ollamaClient.list()).models; 
     localModels.forEach(model => {
       // TODO: set a more informative maxInputTokens and maxOutputTokens
-      const regModel = OllamaModelProvider.registerLanguageModel(ollamaClient, model, 1000, 1000);
+      const regModel = ollamaModelProvider.registerLanguageModel(ollamaClient, model, 1000, 1000);
       context.subscriptions.push(regModel);
       console.log(`Ollama model ${model.name} registered`);
     });
   }
 
-  const coqTokenizer = tok.create(
+  const coqTokenizer = tokenizer.create(
     context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
-    context.asAbsolutePath('./src/lib/coq-lsp/syntaxes/coq.json'),
-    'source.coq'
+    [
+      { path: context.asAbsolutePath('./src/syntax/syntaxes/coq.json'), scopeName: 'source.coq' },
+      { path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }
+    ]
   );
+
+  const regHelloWorld = vscode.commands.registerCommand('rocq-coding-assistant.helloWorld', () => {
+    vscode.window.showInformationMessage('Hello World from Rocq coding assistant!');
+  });
+  context.subscriptions.push(regHelloWorld);
 
   const regSolve = vscode.commands.registerCommand('rocq-coding-assistant.solve', async () => {
     const editor = vscode.window.activeTextEditor;
     
     if (!editor) return;
 
-    const selection = editor.selection;
-    const selectionLine = editor.document.lineAt(selection.anchor.line).text;
-    const tokenizedSelectionLine = (await coqTokenizer.tokenize(selectionLine))[0];
-    
-    const isSelectionTheorem = tokenizedSelectionLine.tokens.some(token => 
-      token.startIndex === selection.anchor.character && 
-      token.endIndex === selection.end.character && 
-      token.scopes.includes('entity.name.function.theorem.coq')
-    );
+    const text = editor.document.getText();
+    const tokenizedText = await coqTokenizer.tokenize(text, 'source.coq.proof');
+    const splittedText = text.split(/\r?\n|\r|\n/g);
 
-    if (!isSelectionTheorem) {
-      vscode.window.showErrorMessage('No theorem selected'); 
-      return;
-    } else {
-      vscode.window.showInformationMessage('Theorem');
+    const proof = extractors.extractProofAtPosition(editor.selection.active, splittedText, tokenizedText);
+    if (proof === undefined) { 
+      vscode.window.showErrorMessage('Not in a theorem'); 
+      return; 
     }
+
+    const goals = await Promise.all(proof.admitsLocations.map(async (admitsLocation) => {
+      const params = {
+        textDocument: VersionedTextDocumentIdentifier.create(editor.document.uri.toString(), editor.document.version),
+        position: lsp.Position.create(admitsLocation.start.line, admitsLocation.start.character)
+      };
+
+      const goal = await coqLSPClient?.sendRequest(cpqLSP.goalReq, params);
+
+      return goal;
+    }));
   });
   context.subscriptions.push(regSolve);
-
-  const regHelloWorld = vscode.commands.registerCommand('rocq-coding-assistant.helloWorld', () => {
-    vscode.window.showInformationMessage('Hello World from Rocq coding assistant!');
-  });
-  context.subscriptions.push(regHelloWorld);
 
   const regTryOllama = vscode.commands.registerCommand('rocq-coding-assistant.tryOllama', async () => {
     console.log(await vscode.lm.selectChatModels());
@@ -108,10 +115,6 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  try {
-    CoqLSPClient.stop();
-    console.log('Coq-LSP client stopped');
-  } catch (error) {
-    console.error(`Coq-LSP client enocuntered an error while stopping: ${error}`);
-  }
+  if (coqLSPClient && coqLSPClient.isRunning()) 
+    coqLSPClient.dispose();
 }
