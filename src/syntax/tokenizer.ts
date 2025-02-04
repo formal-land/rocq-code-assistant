@@ -38,15 +38,15 @@ export function create(onigurumaWASMPath: string, grammars: GrammarReference[]):
   async function tokenize(text: string, scopeName: string) {
     const grammar = await registry.loadGrammar(scopeName);
 
-    if (!grammar) return Promise.reject('Cannot load grammar');
+    if (!grammar) return Promise.reject(`Cannot load grammar for scope ${scopeName}`);
 
     const lines = text.split(NEW_LINE_REGEX);
     let ruleStack = vsctm.INITIAL;
-    const tokenizedLines = new Array<vsctm.ITokenizeLineResult>;
-    lines.forEach((line) => {
+
+    const tokenizedLines = lines.map(line => {
       const tokenizedLine = grammar.tokenizeLine(line, ruleStack);
       ruleStack = tokenizedLine.ruleStack;
-      tokenizedLines.push(tokenizedLine);
+      return tokenizedLine;
     });
     
     return tokenizedLines;

@@ -78,8 +78,8 @@ function mapRole(role: vscode.LanguageModelChatMessageRole) {
 function vscodeToOllamaMessage(message: vscode.LanguageModelChatMessage): ollama.Message {
   return {
     role: mapRole(message.role),
-    content: message.content.map(
-      part => (part instanceof vscode.LanguageModelTextPart) ? part.value : '' // No other part supported at the moment
-    ).join('\n')
+    content: message.content
+      .map(part => (part instanceof vscode.LanguageModelTextPart) ? part.value : '') // No other part supported at the moment
+      .join('\n')
   };
 }
