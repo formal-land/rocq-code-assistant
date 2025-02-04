@@ -6,6 +6,8 @@ import * as tokenizer from './syntax/tokenizer';
 import * as cpqLSP from './coq-lsp-client';
 import * as ollamaModelProvider from './model-providers/ollama';
 import * as extractors from './syntax/extractors';
+import { GoalRequest } from './lib/coq-lsp/types';
+import * as basicLLM from './oracles/basic-LLM/basic-LLM';
 
 let coqLSPClient: LanguageClient | undefined;
 
@@ -61,57 +63,29 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     const goals = await Promise.all(proof.admitsLocations.map(async (admitsLocation) => {
-      const params = {
+      const params: GoalRequest = {
         textDocument: VersionedTextDocumentIdentifier.create(editor.document.uri.toString(), editor.document.version),
-        position: lsp.Position.create(admitsLocation.start.line, admitsLocation.start.character)
+        position: lsp.Position.create(admitsLocation.start.line, admitsLocation.start.character),
+        pp_format: 'Str'
       };
 
       const goal = await coqLSPClient?.sendRequest(cpqLSP.goalReq, params);
 
       return goal;
     }));
+
+    const [model] = await vscode.lm.selectChatModels({vendor: 'ollama'});
+
+    const oracle = basicLLM.create(model);
+
+    const goal = goals[0]?.goals?.given_up[0];
+
+    if (goal !== undefined) {
+      const response = await oracle.query(goal);
+      console.log(response);
+    }
   });
   context.subscriptions.push(regSolve);
-
-  const regTryOllama = vscode.commands.registerCommand('rocq-coding-assistant.tryOllama', async () => {
-    console.log(await vscode.lm.selectChatModels());
-    const [model] = await vscode.lm.selectChatModels({vendor: 'ollama'});
-    console.log(model);
-
-    let chatResponse: vscode.LanguageModelChatResponse | undefined;
-
-    const messages = [vscode.LanguageModelChatMessage.User('What\'s a lambda term?')];
-
-    try {
-      chatResponse = await model.sendRequest(
-        messages,
-        {},
-        new vscode.CancellationTokenSource().token
-      );
-    } catch (err) {
-      if (err instanceof vscode.LanguageModelError) 
-        console.log('Exception catched', err.message, err.code, err.cause);
-      else 
-        throw err;
-      
-      return;
-    }
-
-    try {
-      // Stream the code into the editor as it is coming in from the Language Model
-      for await (const fragment of chatResponse.text) 
-        console.log(fragment);
-      
-    } catch (err) {
-      if (err instanceof vscode.LanguageModelError) 
-        console.log('Exception catched', err.message, err.code, err.cause);
-      else 
-        throw err;
-      
-      return;
-    }
-  });
-  context.subscriptions.push(regTryOllama);
 }
 
 export function deactivate() {

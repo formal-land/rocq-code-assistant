@@ -46,7 +46,12 @@ export function registerLanguageModel(client: ollama.Ollama, model: ollama.Model
   }
 
   function provideTokenCount(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken): Thenable<number> {
-    throw new Error('Method not implemented.');
+    if (typeof text === 'string') {
+      return Promise.resolve(text.length); // Simplified token count for string
+    } else {
+      const message = text as vscode.LanguageModelChatMessage;
+      return Promise.resolve(message.content.length); // Simplified token count for LanguageModelChatMessage
+    }
   }
 
   let provider: vscode.LanguageModelChatProvider = {

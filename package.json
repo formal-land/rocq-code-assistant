@@ -21,10 +21,6 @@
         "title": "Hello World"
       },
       {
-        "command": "rocq-coding-assistant.tryOllama",
-        "title": "Try Ollama"
-      },
-      {
         "command": "rocq-coding-assistant.solve",
         "title": "Solve with rocq-coding-assistant"
       }
@@ -99,6 +95,7 @@
     "vscode-tmgrammar-test": "^0.1.3"
   },
   "dependencies": {
+    "@vscode/prompt-tsx": "^0.3.0-alpha.18",
     "ollama": "^0.5.12",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-types": "^3.17.5",
