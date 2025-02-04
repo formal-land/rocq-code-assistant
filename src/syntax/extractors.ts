@@ -73,7 +73,9 @@ function proofFromTokens(textLines: string[], tokens: [vsctm.IToken, number][]):
     .join('');
 
   const admitsLocations = tokens
-    .filter(([token, ]) => token.scopes.includes('invalid.illegal.admit.coq'))
+    .filter(([token, lineIdx]) => 
+      token.scopes.includes('invalid.illegal.admit.coq') &&
+      tokenText([token, lineIdx], textLines) === 'admit')
     .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
 
   const location = new vscode.Range(
