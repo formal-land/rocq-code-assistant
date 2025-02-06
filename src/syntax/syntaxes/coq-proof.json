@@ -12,20 +12,22 @@
       "comment": "Defines a proof block",
       "name": "meta.proof.coq",
       "patterns": [
-        { "include": "#proof_keywords" },
+        { "include": "#proof_def_keywords" },
         { "include": "#proof_name" },
         { "include": "#proof_type" },
         { "include": "#proof_body" },
-        { "include": "source.coq#block_comment" }
+        { "include": "source.coq#block_comment" },
+        { "include": "source.coq#proof_keywords" },
+        { "include": "source.coq#admits" }
       ]
     },
-    "proof_keywords" : {
-      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)",
+    "proof_def_keywords" : {
+      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b",
       "name": "keyword.source.coq keyword.function.theorem.coq"
     },
     "proof_name": {
-      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\s+)",
-      "end": "(?=\\s*\\:)",
+      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
+      "end": "(?=\\b\\s+)",
       "name": "entity.name.function.theorem.coq"
     },
     "proof_type": {
@@ -34,11 +36,10 @@
       "name": "storage.type.function.theorem.coq"
     },
     "proof_body": {
-      "begin": "(?=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
-      "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "begin": "(?<=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
+      "end": "(?=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
       "name": "meta.proof.body.coq",
       "patterns": [
-        { "include": "source.coq#proof_keywords" },
         { "include": "source.coq#ltac_builtins" },
         { "include": "source.coq#block_comment" },
         { "include": "source.coq#admits" }
