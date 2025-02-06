@@ -1,36 +1,36 @@
 // SYNTAX TEST "source.coq.proof"
 
 Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
-// <----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+// <----- meta.proof.coq meta.proof.head.coq keyword.source.coq - meta.proof.body.coq
 //    ^^^^^^^^^ entity.name.function.theorem.coq
 //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ storage.type.function.theorem.coq - entity.name.function.theorem.coq
-//   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq
+//   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq
 Proof.
-//<----- meta.proof.coq keyword.source.coq -meta.proof.body.coq
+//<----- meta.proof.coq keyword.source.coq - meta.proof.body.coq meta.proof.head.coq
   intros A B HA HB. split.
 //^^^^^^ support.function.builtin.ltac
-//^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+//^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
   - apply HA.
 //  ^^^^^ support.function.builtin.ltac
-//^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+//^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
   - apply HB.
 //  ^^^^^ support.function.builtin.ltac
-//^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+//^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
 Qed. (* Outside of proof *)
 // <--- keyword.source.coq
-// <---- meta.proof.coq - meta.proof.body.coq
-//   ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
+// <---- meta.proof.coq - meta.proof.body.coq meta.proof.head.coq
+//   ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq meta.proof.head.coq
 
 (* Outside of proof *)
-// <---------------------- - meta.proof.coq meta.proof.body.coq
+// <---------------------- - meta.proof.coq meta.proof.body.coq meta.proof.head.coq
 
 Theorem ex_falso_quodlibet : forall (P : Prop), False -> P.
-// <----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+// <----- meta.proof.coq meta.proof.head.coq keyword.source.coq - meta.proof.body.coq
 //      ^^^^^^^^^^^^^^^^^^ entity.name.function.theorem.coq
 //                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ storage.type.function.theorem.coq - entity.name.function.theorem.coq
-//     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq
+//     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq
 Proof.
-//<----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+//<----- meta.proof.coq keyword.source.coq - meta.proof.body.coq meta.proof.head.coq
   intros P contra.
 //^^^^^^ support.function.builtin.ltac
 //^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
@@ -41,18 +41,18 @@ Proof.
 //                       ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
 
 (* Outside of proof *)
-// <---------------------- - meta.proof.coq meta.proof.body.coq
+// <---------------------- - meta.proof.coq meta.proof.body.coq meta.proof.head.coq
 
 Theorem
-// <------- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+// <------- meta.proof.coq meta.proof.head.coq keyword.source.coq - meta.proof.body.coq
   and_commut : forall P Q : Prop,
 //^^^^^^^^^^ entity.name.function.theorem.coq
 //             ^^^^^^^^^^^^^^^^^^ storage.type.function.theorem.coq - entity.name.function.theorem.coq
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq 
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq 
   P /\ Q -> Q /\ P.
-//^^^^^^^^^^^^^^^^ meta.proof.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
+//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
 Proof.
-//<----- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+//<----- meta.proof.coq keyword.source.coq - meta.proof.body.coq meta.proof.head.coq
   intros P Q [HP HQ].
 //^^^^^^ support.function.builtin.ltac
 //^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
@@ -69,9 +69,10 @@ Proof.
 //  ^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.body.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq
 (* Outside of proof *)
-// <---------------------- - meta.proof.coq meta.proof.body.coq
+// <---------------------- - meta.proof.coq meta.proof.body.coq meta.proof.head.coq
 
-Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
+Lemma and_intro (A B : Prop) : A -> B -> A /\ B.
+//               ^^^^^^^^^^ variable.paramter.function.theorem.coq
 Proof.
   intros A B HA HB. split.
   { admit. }
@@ -85,15 +86,15 @@ Admitted.
 // <---------------------- - meta.proof.coq meta.proof.body.coq
 
 Theorem and_commut :
-// <------- meta.proof.coq keyword.source.coq - meta.proof.body.coq
+// <------- meta.proof.coq meta.proof.head.coq  keyword.source.coq - meta.proof.body.coq
 //      ^^^^^^^^^^ entity.name.function.theorem.coq
-//^^^^^^^^^^^^^^^^^^ meta.proof.coq - meta.proof.body.coq 
+//^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq 
   forall P Q : Prop,
-//^^^^^^^^^^^^^^^^^^ meta.proof.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
+//^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
   P /\ Q -> Q /\ P.
-//^^^^^^^^^^^^^^^^ meta.proof.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
+//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq storage.type.function.theorem.coq - meta.proof.body.coq entity.name.function.theorem.coq
 (* Inside of proof *)
-// <--------------------- meta.proof.coq - meta.proof.body.coq
+// <--------------------- meta.proof.coq meta.proof.head.coq - meta.proof.body.coq
 Proof.
 (* Inside of proof body *)
 // <-------------------------- meta.proof.coq meta.proof.body.coq

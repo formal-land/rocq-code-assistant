@@ -7,33 +7,28 @@
   ],
   "repository": {
     "proof": {
-      "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition))",
+      "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b)",
       "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
       "comment": "Defines a proof block",
       "name": "meta.proof.coq",
       "patterns": [
-        { "include": "#proof_def_keywords" },
-        { "include": "#proof_name" },
-        { "include": "#proof_type" },
+        { "include": "#proof_head" },
         { "include": "#proof_body" },
-        { "include": "source.coq#block_comment" },
         { "include": "source.coq#proof_keywords" },
         { "include": "source.coq#admits" }
       ]
     },
-    "proof_def_keywords" : {
-      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b",
-      "name": "keyword.source.coq keyword.function.theorem.coq"
-    },
-    "proof_name": {
-      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
-      "end": "(?=\\b\\s+)",
-      "name": "entity.name.function.theorem.coq"
-    },
-    "proof_type": {
-      "begin": "(?<=\\:\\s*)",
-      "end": "(?=\\s*\\.)",
-      "name": "storage.type.function.theorem.coq"
+    "proof_head" : {
+      "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b)",
+      "end": "(?=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
+      "name": "meta.proof.head.coq",
+      "patterns": [
+        { "include": "#proof_token" },
+        { "include": "#proof_name" },
+        { "include": "#proof_bind" },
+        { "include": "#proof_type" },
+        { "include": "source.coq#block_comment" }
+      ]
     },
     "proof_body": {
       "begin": "(?<=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
@@ -44,6 +39,25 @@
         { "include": "source.coq#block_comment" },
         { "include": "source.coq#admits" }
       ]
+    },
+    "proof_token" : {
+      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b",
+      "name": "keyword.source.coq keyword.function.theorem.coq"
+    },
+    "proof_name": {
+      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
+      "end": "(?=\\b\\s+)",
+      "name": "entity.name.function.theorem.coq"
+    },
+    "proof_bind": {
+      "begin": "(?<=\\(|\\{)",
+      "end": "(?=\\)|\\})",
+      "name": "variable.paramter.function.theorem.coq"
+    },
+    "proof_type": {
+      "begin": "(?<=\\:\\s*)",
+      "end": "(?=\\s*\\.(?!\\S))",
+      "name": "storage.type.function.theorem.coq"
     }
   },
   "scopeName": "source.coq.proof",

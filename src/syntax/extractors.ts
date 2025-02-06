@@ -64,13 +64,16 @@ function proofFromTokens(textLines: string[], tokens: [vsctm.IToken, number][]):
 
   const type = tokens
     .filter(([token, ]) => token.scopes.includes('storage.type.function.theorem.coq'))
-    .map((token) => tokenText(token, textLines))
-    .join('');
+    .reduce((acc, [token, lineIdx], idx, tokens) =>
+      acc + (idx > 0 && lineIdx > tokens[idx - 1][1] ? '\n' : '') + tokenText([token, lineIdx], textLines), 
+    '');
+
 
   const body = tokens
     .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
-    .map((token) => tokenText(token, textLines))
-    .join('');
+    .reduce((acc, [token, lineIdx], idx, tokens) =>
+      acc + (idx > 0 && lineIdx > tokens[idx - 1][1] ? '\n' : '') + tokenText([token, lineIdx], textLines), 
+    '');
 
   const admitsLocations = tokens
     .filter(([token, lineIdx]) => 
