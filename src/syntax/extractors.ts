@@ -52,32 +52,34 @@ function flatTokens(tokenizedLines: vsctm.ITokenizeLineResult[]) {
 }
 
 function proofFromTokens(textLines: string[], tokens: [vsctm.IToken, number][]): ProofMeta {
+  tokens = tokens
+    .filter(([token, lineIdx]) => 
+      !token.scopes.includes('comment.block.coq') && 
+      !(tokenText([token, lineIdx], textLines) === ''));
+
   const keyword = tokens
     .filter(([token, ]) => token.scopes.includes('keyword.function.theorem.coq'))
     .map(token => tokenText(token, textLines))
-    .join('');
+    .join(' ');
 
   const name = tokens
     .filter(([token, ]) => token.scopes.includes('entity.name.function.theorem.coq'))
     .map(token => tokenText(token, textLines))
-    .join('');
+    .join(' ');
 
   const type = tokens
     .filter(([token, ]) => token.scopes.includes('storage.type.function.theorem.coq'))
-    .reduce((acc, [token, lineIdx], idx, tokens) =>
-      acc + (idx > 0 && lineIdx > tokens[idx - 1][1] ? '\n' : '') + tokenText([token, lineIdx], textLines), 
-    '');
-
+    .map(token => tokenText(token, textLines))
+    .join(' ');
 
   const body = tokens
     .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
-    .reduce((acc, [token, lineIdx], idx, tokens) =>
-      acc + (idx > 0 && lineIdx > tokens[idx - 1][1] ? '\n' : '') + tokenText([token, lineIdx], textLines), 
-    '');
+    .map(token => tokenText(token, textLines))
+    .join(' ');
 
   const admitsLocations = tokens
     .filter(([token, lineIdx]) => 
-      token.scopes.includes('invalid.illegal.admit.coq') &&
+      token.scopes.includes('tactic') &&
       tokenText([token, lineIdx], textLines) === 'admit')
     .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
 

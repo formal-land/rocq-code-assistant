@@ -13,14 +13,12 @@
       "name": "meta.proof.coq",
       "patterns": [
         { "include": "#proof_head" },
-        { "include": "#proof_body" },
-        { "include": "source.coq#proof_keywords" },
-        { "include": "source.coq#admits" }
+        { "include": "#proof_body" }
       ]
     },
     "proof_head" : {
       "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b)",
-      "end": "(?=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
+      "end": "(?=\\b(Proof(\\s+(Mode|using|with))?)\\.)",
       "name": "meta.proof.head.coq",
       "patterns": [
         { "include": "#proof_token" },
@@ -35,14 +33,13 @@
       "end": "(?=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
       "name": "meta.proof.body.coq",
       "patterns": [
-        { "include": "source.coq#ltac_builtins" },
-        { "include": "source.coq#block_comment" },
-        { "include": "source.coq#admits" }
+        { "include": "#tactic" },
+        { "include": "source.coq#block_comment" }
       ]
     },
     "proof_token" : {
       "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b",
-      "name": "keyword.source.coq keyword.function.theorem.coq"
+      "name": "keyword.function.theorem.coq"
     },
     "proof_name": {
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
@@ -58,6 +55,11 @@
       "begin": "(?<=\\:\\s*)",
       "end": "(?=\\s*\\.(?!\\S))",
       "name": "storage.type.function.theorem.coq"
+    },
+    "tactic": {
+      "begin": "(?=[a-zA-Z]|_|\\p{L})",
+      "end": "(?<=\\.|;)(?!\\S)",
+      "name": "tactic"
     }
   },
   "scopeName": "source.coq.proof",
