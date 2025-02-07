@@ -2,7 +2,7 @@
   "fileTypes": ["v"],
   "name": "Coq proofs",
   "patterns": [
-    { "include": "source.coq#block_comment" },
+    { "include": "#block_comment" },
     { "include": "#proof" }
   ],
   "repository": {
@@ -25,7 +25,7 @@
         { "include": "#proof_name" },
         { "include": "#proof_bind" },
         { "include": "#proof_type" },
-        { "include": "source.coq#block_comment" }
+        { "include": "#block_comment" }
       ]
     },
     "proof_body": {
@@ -34,32 +34,70 @@
       "name": "meta.proof.body.coq",
       "patterns": [
         { "include": "#tactic" },
-        { "include": "source.coq#block_comment" }
+        { "include": "#block_comment" }
       ]
     },
     "proof_token" : {
       "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b",
-      "name": "keyword.function.theorem.coq"
+      "name": "meta.proof.head.keyword.coq"
     },
     "proof_name": {
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
       "end": "(?=\\b\\s+)",
-      "name": "entity.name.function.theorem.coq"
+      "name": "meta.proof.head.name.coq"
     },
     "proof_bind": {
       "begin": "(?<=\\(|\\{)",
       "end": "(?=\\)|\\})",
-      "name": "variable.paramter.function.theorem.coq"
+      "name": "meta.proof.head.bind.coq"
     },
     "proof_type": {
       "begin": "(?<=\\:\\s*)",
       "end": "(?=\\s*\\.(?!\\S))",
-      "name": "storage.type.function.theorem.coq"
+      "name": "meta.proof.head.type.coq"
     },
     "tactic": {
       "begin": "(?=[a-zA-Z]|_|\\p{L})",
       "end": "(?<=\\.|;)(?!\\S)",
-      "name": "tactic"
+      "name": "meta.proof.body.tactic.coq",
+      "patterns": [
+        { "include": "#admits" }
+      ]
+    },
+    "admits": {
+      "begin": "(?=admit)",
+      "end": "(?<=\\.|;)(?!\\S)",
+      "name": "meta.proof.body.tactic.admit.coq"
+    },
+    "block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.coq",
+      "patterns": [
+        {
+          "include": "#block_comment"
+        },
+        {
+          "include": "#block_double_quoted_string"
+        }
+      ]
+    },
+    "block_double_quoted_string": {
+      "applyEndPatternLast": 1,
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.coq"
+        }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.coq"
+        }
+      },
+      "name": "string.quoted.double.coq"
     }
   },
   "scopeName": "source.coq.proof",

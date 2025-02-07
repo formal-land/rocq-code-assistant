@@ -1,13 +1,13 @@
 import * as vsctm from 'vscode-textmate';
 import * as vscode from 'vscode';
-import { ProofMeta } from './syntaxes/coq-proof';
+import { Proof } from './coq-proof';
 
 export function extractProofFromName(proofName: string, textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]) {
   const tokens = flatTokens(tokenizedLines);
 
   const nameToken = tokens.find(([token, lineIdx]) => 
     token.scopes.includes('meta.proof.coq') &&
-    token.scopes.includes('entity.name.function.theorem.coq') &&
+    token.scopes.includes('meta.proof.head.name.coq') &&
     tokenText([token, lineIdx], textLines) === proofName.trim());
 
   if (nameToken === undefined)
@@ -51,36 +51,34 @@ function flatTokens(tokenizedLines: vsctm.ITokenizeLineResult[]) {
   );
 }
 
-function proofFromTokens(textLines: string[], tokens: [vsctm.IToken, number][]): ProofMeta {
+function proofFromTokens(textLines: string[], tokens: [vsctm.IToken, number][]): Proof.Meta {
   tokens = tokens
     .filter(([token, lineIdx]) => 
       !token.scopes.includes('comment.block.coq') && 
       !(tokenText([token, lineIdx], textLines) === ''));
 
   const keyword = tokens
-    .filter(([token, ]) => token.scopes.includes('keyword.function.theorem.coq'))
+    .filter(([token, ]) => token.scopes.includes('meta.proof.head.keyword.coq'))
     .map(token => tokenText(token, textLines))
     .join(' ');
 
   const name = tokens
-    .filter(([token, ]) => token.scopes.includes('entity.name.function.theorem.coq'))
+    .filter(([token, ]) => token.scopes.includes('meta.proof.head.name.coq'))
     .map(token => tokenText(token, textLines))
     .join(' ');
 
   const type = tokens
-    .filter(([token, ]) => token.scopes.includes('storage.type.function.theorem.coq'))
+    .filter(([token, ]) => token.scopes.includes('meta.proof.head.type.coq'))
     .map(token => tokenText(token, textLines))
     .join(' ');
 
   const body = tokens
     .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
-    .map(token => tokenText(token, textLines))
-    .join(' ');
+    .map(token => new Proof.Token(tokenText(token, textLines), token[0].scopes));
 
   const admitsLocations = tokens
     .filter(([token, lineIdx]) => 
-      token.scopes.includes('tactic') &&
-      tokenText([token, lineIdx], textLines) === 'admit')
+      token.scopes.includes('meta.proof.body.tactic.admit.coq'))
     .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
 
   const location = new vscode.Range(
