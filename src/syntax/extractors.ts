@@ -1,6 +1,7 @@
 import * as vsctm from 'vscode-textmate';
 import * as vscode from 'vscode';
-import { ProofMeta } from './coq-proof';
+import { ProofMeta, ProofBlock, FocusingToken } from './coq-proof';
+import { Stack } from '../utils';
 
 export function extractProofFromName(uri: string, proofName: string, textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]) {
   const tokens = flatTokens(tokenizedLines);
@@ -72,9 +73,40 @@ function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.IToken
     .map(token => tokenText(token, textLines))
     .join(' ');
 
-  const body = tokens
+  const blocks = new Stack<ProofBlock>();
+  const body = blocks.push(new ProofBlock('{'));
+
+  function _openingToken(construct: string): FocusingToken | undefined {
+    switch (construct) {
+      case '-': return '-';
+      case '+': return '+';
+      case '*': return '*';
+      case '}': return '{';
+    }
+  }
+
+  tokens
     .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
-    .map(token => ({ token: tokenText(token, textLines), tags: token[0].scopes }));
+    .map(token => ({ token: tokenText(token, textLines), tags: token[0].scopes }))
+    .forEach(({ token, tags }) => {
+      if (tags.includes('meta.proof.body.focus.coq')) {
+        if (['-', '+', '*', '}'].includes(token)) {
+          const focusingTokens = blocks.content().map(block => block.focusingToken);
+          const lastScopeBlockIdx = focusingTokens.lastIndexOf('{');
+          const openingTokenIdx = focusingTokens.lastIndexOf(_openingToken(token));
+          
+          if (openingTokenIdx >= lastScopeBlockIdx)
+            [...Array(blocks.size() - openingTokenIdx)].forEach(() => blocks.pop());
+        }
+        if (['-', '+', '*', '{'].includes(token)) {
+          const subBlock = new ProofBlock(<FocusingToken>token);
+          blocks.peek()?.content.push(subBlock);
+          blocks.push(subBlock);
+        }
+      } else {
+        blocks.peek()?.content.push({ token, tags });
+      }
+    });
 
   const admitsLocations = tokens
     .filter(([token, ]) => 

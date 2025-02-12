@@ -29,13 +29,18 @@ export function zip<T, U>(first: Array<T>, second: Array<U>): Array<[T, U]> {
 
 export class Stack<T> {
   private items: T[] = [];
+
+  content() {
+    return this.items;
+  }
   
   push(item: T) {
     this.items.push(item);
+    return item;
   }
 
   pop() {
-    return this.items.pop();
+    return this.items.pop(); 
   }
 
   peek() {

@@ -12,11 +12,11 @@ Proof.
 //                  ^^^^^^ meta.proof.body.tactic.coq
 //^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
   - apply HA.
-//^ - meta.proof.body.tactic.coq
+//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
 //  ^^^^^^^^^ meta.proof.body.tactic.coq
 //^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
   - apply HB.
-//^ - meta.proof.body.tactic.coq
+//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
 //  ^^^^^^^^^ meta.proof.body.tactic.coq
 //^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
 Qed. (* Outside of proof *)
@@ -57,13 +57,13 @@ Proof.
 //^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
   split.
 //^^^^^^ meta.proof.body.tactic.coq
-    - (* left *) apply HQ   .
-//  ^ - meta.proof.body.tactic.coq
+    + (* left *) apply HQ   .
+//  ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
 //    ^^^^^^^^^^ comment.block.coq
 //               ^^^^^^^^^^^^ meta.proof.body.tactic.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
-    - (* right *) apply HP.  Qed.
-//  ^ - meta.proof.body.tactic.coq
+    + (* right *) apply HP.  Qed.
+//  ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
 //    ^^^^^^^^^^^ meta.proof.coq
 //                ^^^^^^^^^ meta.proof.body.tactic.coq
 //                           ^^^ - meta.proof.body.coq
@@ -77,8 +77,12 @@ Lemma and_intro (A B : Prop) : A -> B -> A /\ B.
 Proof.
   intros A B HA HB. split.
   { admit. }
+//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
+//         ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
 //  ^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.tactic.admit.coq
   { admit  . }
+//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
+//           ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
 //  ^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.tactic.admit.coq
 Admitted.
 // <-------- meta.proof.coq - meta.proof.body.coq

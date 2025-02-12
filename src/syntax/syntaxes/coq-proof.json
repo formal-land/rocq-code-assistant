@@ -34,6 +34,7 @@
       "name": "meta.proof.body.coq",
       "patterns": [
         { "include": "#tactic" },
+        { "include": "#focusing_construct" },
         { "include": "#block_comment" }
       ]
     },
@@ -68,6 +69,10 @@
       "begin": "(?=admit)",
       "end": "(?<=\\.|;)(?!\\S)",
       "name": "meta.proof.body.tactic.admit.coq"
+    },
+    "focusing_construct": {
+      "match": "(?<!\\w)([-\\+\\*\\{\\}])(?!\\w)",
+      "name": "meta.proof.body.focus.coq"
     },
     "block_comment": {
       "applyEndPatternLast": 1,

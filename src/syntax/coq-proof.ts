@@ -2,17 +2,35 @@ import * as vscode from 'vscode';
 
 export type Proof = string[];
 
+export type FocusingToken = '-'|'+'|'*'|'{';
+
+export class ProofBlock {
+  content: (ProofBlock | { token: string, tags: string[] })[] = [];
+  focusingToken?: FocusingToken;
+
+  constructor(focusingToken?: FocusingToken) {
+    this.focusingToken = focusingToken;
+  }
+
+  // TODO: not putting focusing token!
+  toProof(): Proof {
+    return this.content
+      .map(item => item instanceof ProofBlock ? item.toProof() : [item.token])
+      .reduce((proof, item) => proof.concat(item));
+  }
+}
+
 export class ProofMeta {
   keyword: string;
   name: string;
   type: string;
-  body: { token: string, tags: string[] }[];
+  body: ProofBlock;
   uri: string;
   location: vscode.Range;
   admitsLocations: vscode.Range[];
 
-  constructor(keyword: string, name: string, type: string, body: { token: string, tags: string[] }[], 
-    uri: string, location: vscode.Range, admitsLocations: vscode.Range[]) {
+  constructor(keyword: string, name: string, type: string, body: ProofBlock, uri: string, 
+    location: vscode.Range, admitsLocations: vscode.Range[]) {
     this.keyword = keyword;
     this.name = name;
     this.type = type;
@@ -23,6 +41,6 @@ export class ProofMeta {
   }
 
   toProof(): Proof {
-    return this.body.map(({token, }) => token);
+    return this.body.toProof();
   }
 }
