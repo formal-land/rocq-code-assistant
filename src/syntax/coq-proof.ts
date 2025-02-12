@@ -1,22 +1,28 @@
 import * as vscode from 'vscode';
 
-export namespace Proof {
-  export interface Meta {
-    keyword: string,
-    name: string,
-    type: string,
-    body: Token[],
-    location: vscode.Range,
-    admitsLocations: vscode.Range[]
+export type Proof = string[];
+
+export class ProofMeta {
+  keyword: string;
+  name: string;
+  type: string;
+  body: { token: string, tags: string[] }[];
+  uri: string;
+  location: vscode.Range;
+  admitsLocations: vscode.Range[];
+
+  constructor(keyword: string, name: string, type: string, body: { token: string, tags: string[] }[], 
+    uri: string, location: vscode.Range, admitsLocations: vscode.Range[]) {
+    this.keyword = keyword;
+    this.name = name;
+    this.type = type;
+    this.body = body;
+    this.uri = uri;
+    this.location = location;
+    this.admitsLocations = admitsLocations;
   }
 
-  export class Token {
-    text: string;
-    tags: string[];
-
-    constructor(text: string, tags: string[]) {
-      this.text = text;
-      this.tags = tags;
-    }
+  toProof(): Proof {
+    return this.body.map(({token, }) => token);
   }
 }
