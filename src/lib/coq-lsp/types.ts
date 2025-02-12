@@ -220,3 +220,19 @@ export interface PetRunParams {
   st: number;
   tac: string;
 }
+
+export interface PetGoalParams {
+  st: number
+}
+
+export interface PetStartAnswer {
+  st: number,
+  hash: number,
+  proof_finished: boolean
+}
+
+export interface PetRunAnswer {
+  st: number,
+  hash: number,
+  proof_finished: boolean
+}
