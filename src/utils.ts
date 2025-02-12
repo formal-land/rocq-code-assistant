@@ -26,3 +26,23 @@ export function zip<T, U>(first: Array<T>, second: Array<U>): Array<[T, U]> {
     zipped.push([first[i], second[i]]);
   return zipped;
 }
+
+export class Stack<T> {
+  private items: T[] = [];
+  
+  push(item: T) {
+    this.items.push(item);
+  }
+
+  pop() {
+    return this.items.pop();
+  }
+
+  peek() {
+    if (this.size() > 0) return this.items[this.size() - 1];
+  }
+
+  size() {
+    return this.items.length;
+  }
+}
