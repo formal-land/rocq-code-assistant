@@ -45,7 +45,7 @@ Proof.
 
 Theorem
 // <------- meta.proof.coq meta.proof.head.coq meta.proof.head.keyword.coq - meta.proof.body.coq
-  and_commut : forall P Q : Prop,
+  and_commut: forall P Q : Prop,
 //^^^^^^^^^^ meta.proof.head.name.coq
 //             ^^^^^^^^^^^^^^^^^^ meta.proof.head.type.coq - meta.proof.head.name.coq
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq 

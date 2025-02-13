@@ -44,7 +44,7 @@
     },
     "proof_name": {
       "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
-      "end": "(?=\\b\\s+)",
+      "end": "(?=(\\b|\\:)\\s+)",
       "name": "meta.proof.head.name.coq"
     },
     "proof_bind": {
@@ -59,7 +59,7 @@
     },
     "tactic": {
       "begin": "(?=[a-zA-Z]|_|\\p{L})",
-      "end": "(?<=\\.|;)(?!\\S)",
+      "end": "(?<=\\.)(?!\\S)",
       "name": "meta.proof.body.tactic.coq",
       "patterns": [
         { "include": "#admits" }

@@ -225,14 +225,12 @@ export interface PetGoalParams {
   st: number
 }
 
-export interface PetStartAnswer {
+export interface PetState {
   st: number,
   hash: number,
   proof_finished: boolean
 }
 
-export interface PetRunAnswer {
-  st: number,
-  hash: number,
-  proof_finished: boolean
-}
+export type PetStartAnswer = PetState;
+
+export type PetRunAnswer = PetState;
