@@ -96,7 +96,8 @@ function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.IToken
           const openingTokenIdx = focusingTokens.lastIndexOf(_openingToken(token));
           
           if (openingTokenIdx >= lastScopeBlockIdx)
-            [...Array(blocks.size() - openingTokenIdx)].forEach(() => blocks.pop());
+            while (blocks.size() > 1 && blocks.size() > openingTokenIdx) 
+              blocks.pop();
         }
         if (['-', '+', '*', '{'].includes(token)) {
           const subBlock = new ProofBlock(<FocusingToken>token);
