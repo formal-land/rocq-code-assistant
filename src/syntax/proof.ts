@@ -7,6 +7,15 @@ import { PetState } from '../lib/coq-lsp/types';
 export type FocusingTokenOpen = '-'|'+'|'*'|'{';
 export type FocusingTokenClose = '-'|'+'|'*'|'}';
 
+function _openingToken(construct: FocusingTokenClose): FocusingTokenOpen {
+  switch (construct) {
+    case '-': return '-';
+    case '+': return '+';
+    case '*': return '*';
+    case '}': return '{';
+  }
+}
+
 export interface ProofToken {
   value: string,
   tags: string[]
@@ -62,15 +71,6 @@ export class ProofMeta {
     const insertStack = new Stack<ProofBlock>;
     this.checkStack.content().forEach(({ block, }) => insertStack.push(block));
 
-    function _openingToken(construct: FocusingTokenClose): FocusingTokenOpen {
-      switch (construct) {
-        case '-': return '-';
-        case '+': return '+';
-        case '*': return '*';
-        case '}': return '{';
-      }
-    }
-
     tokens.forEach(({ value, tags }) => {
       if (tags.includes('meta.proof.body.focus.coq')) {
         if (['-', '+', '*', '}'].includes(value)) {
@@ -87,7 +87,7 @@ export class ProofMeta {
           insertStack.peek()?.addElement(subBlock);
           insertStack.push(subBlock);
         }
-      } else {
+      } else if (!tags.includes('meta.proof.body.tactic.admit.coq')) {
         insertStack.peek()?.addElement({ value, tags });
       }
     });
@@ -95,23 +95,19 @@ export class ProofMeta {
 
   async check(coqLSPClient: LanguageClient, state: PetState) {
     let currBlock;
-    
+    let goalConf;
     while ((currBlock = this.checkStack.peek()) && currBlock.block.size() > currBlock.lastCheckedIdx + 1) {
       let element = currBlock.block.getElement(currBlock.lastCheckedIdx + 1);
       if (element instanceof ProofBlock) {
         this.checkStack.push({ block: element, lastCheckedIdx: -1 });
       } else {
-        try {
-          state = await coqLSPClient.sendRequest(Request.Petanque.run, { st: state.st, tac: element.value });
-        } catch (e) {
-          return false;
-        }
-        let goals = await coqLSPClient.sendRequest(Request.Petanque.goals, { st: state.st });
-        if (goals.goals.length === 0)
+        state = await coqLSPClient.sendRequest(Request.Petanque.run, { st: state.st, tac: element.value });
+        goalConf = await coqLSPClient.sendRequest(Request.Petanque.goals, { st: state.st });
+        if (goalConf.goals.length === 0)
           this.checkStack.pop();
       }
       currBlock.lastCheckedIdx++;
     }
-    return true;
+    return { goal: goalConf?.goals[0], state: state };
   }
 }
