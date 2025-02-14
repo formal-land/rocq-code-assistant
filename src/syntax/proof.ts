@@ -118,7 +118,7 @@ export class ProofMeta {
       if (nextElement instanceof ProofBlock) {
         this.checkStack.push(nextElement);
       } else try {
-        checkInfo.state = await coqLSPClient.sendRequest(Request.Petanque.run, { st: state.st, tac: nextElement.value });     
+        checkInfo.state = await coqLSPClient.sendRequest(Request.Petanque.run, { st: checkInfo.state.st, tac: nextElement.value });     
       } catch (error: any) {
         checkInfo.status = false;
         checkInfo.message = error;
