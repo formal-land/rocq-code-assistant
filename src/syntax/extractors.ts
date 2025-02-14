@@ -1,6 +1,6 @@
 import * as vsctm from 'vscode-textmate';
 import * as vscode from 'vscode';
-import { ProofMeta } from './coq-proof';
+import { ProofMeta } from './proof';
 
 export function extractProofFromName(uri: string, proofName: string, textLines: string[], tokenizedLines: vsctm.ITokenizeLineResult[]) {
   const tokens = flatTokens(tokenizedLines);
@@ -72,22 +72,21 @@ function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.IToken
     .map(token => tokenText(token, textLines))
     .join(' ');
 
-  const admitsLocations = tokens
-    .filter(([token, ]) => 
-      token.scopes.includes('meta.proof.body.tactic.admit.coq'))
-    .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
+  const body = tokens
+    .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
+    .map(token => ({ value: tokenText(token, textLines), tags: token[0].scopes }));
 
   const location = new vscode.Range(
     tokens[0][1], tokens[0][0].startIndex, 
     tokens[tokens.length - 1][1], tokens[tokens.length - 1][0].endIndex);
-  
-  const proofMeta = new ProofMeta(keyword, name, type, uri, location, admitsLocations);
 
-  proofMeta.insert(
-    tokens
-      .filter(([token, ]) => token.scopes.includes('meta.proof.body.coq'))
-      .map(token => ({ value: tokenText(token, textLines), tags: token[0].scopes }))
-  );
+  const admitsLocations = tokens
+    .filter(([token, ]) => 
+      token.scopes.includes('meta.proof.body.tactic.admit.coq'))
+    .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
+  
+  const proofMeta = new ProofMeta(uri, keyword, name, type, location, admitsLocations);
+  proofMeta.insert(body);
 
   return proofMeta;
 }

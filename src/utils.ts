@@ -28,14 +28,10 @@ export function zip<T, U>(first: Array<T>, second: Array<U>): Array<[T, U]> {
 }
 
 export class Stack<T> {
-  private items: T[] = [];
-
-  content() {
-    return this.items;
-  }
+  readonly items: T[] = [];
   
-  push(item: T) {
-    this.items.push(item);
+  push(...item: T[]) {
+    this.items.push(...item);
     return item;
   }
 
@@ -49,5 +45,9 @@ export class Stack<T> {
 
   size() {
     return this.items.length;
+  }
+
+  merge(stack: Stack<T>) {
+    this.push(...stack.items);
   }
 }
