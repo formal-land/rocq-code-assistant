@@ -24,8 +24,6 @@ export default [{
       format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
       leadingUnderscore: 'allow'
     }],
-
-    curly: ['warn', 'multi', 'consistent'],
     eqeqeq: 'warn',
     'no-throw-literal': 'warn',
     semi: 'warn',
