@@ -14,17 +14,20 @@ export function create(model: vscode.LanguageModelChat): Oracle {
       model
     );
 
-    const response = await model.sendRequest(
+    const rawResponse = await model.sendRequest(
       messages,
       {},
       new vscode.CancellationTokenSource().token
     );
 
-    const responseText: string[] = [];
-    for await (const fragment of response.text)
-      responseText.push(fragment);
+    const fragments: string[] = [];
+    for await (const fragment of rawResponse.text)
+      fragments.push(fragment);
 
-    return responseText.join('');
+    const parsedResponse = fragments.join('').match(/```coq(?<coqCode>[\s\S]*)```/)?.groups;
+    
+    if (parsedResponse) return parsedResponse['coqCode'];
+    else return Promise.reject('Error quering the LLM');
   }
 
   return { query };
