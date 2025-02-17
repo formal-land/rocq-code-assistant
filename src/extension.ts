@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { LanguageClient, VersionedTextDocumentIdentifier } from 'vscode-languageclient/node';
+import { LanguageClient } from 'vscode-languageclient/node';
 import * as utils from './utils';
 import * as tokenizer from './syntax/tokenizer';
 import * as cpqLSP from './coq-lsp-client';
 import * as ollamaModelProvider from './model-providers/ollama';
+import * as openAIModelProvider from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import * as basicLLM from './oracles/basic-LLM/basic-LLM';
 import { search } from './search';
@@ -14,7 +15,7 @@ export async function activate(context: vscode.ExtensionContext) {
   coqLSPClient = cpqLSP.create();
   coqLSPClient.start();
 
-  const isOllamaEnabled = utils.getConfBoolean('ollama-enabled', true);
+  const isOllamaEnabled = false; //utils.getConfBoolean('ollama-enabled', false);
   if (isOllamaEnabled) {
     // TODO: what if ollama is enabled after that the extension is run?
     const ollamaHostAddress = utils.getConfString('ollama-host-address', '172.28.176.1');
@@ -31,6 +32,20 @@ export async function activate(context: vscode.ExtensionContext) {
       context.subscriptions.push(regModel);
       console.log(`Ollama model ${model.name} registered`);
     });
+  }
+
+  const isOpenAIEnabled = false;
+  if (isOpenAIEnabled) {
+    const openAIClient = openAIModelProvider.init();
+    const modelMetadata: vscode.ChatResponseProviderMetadata = {
+      name: 'gpt-4o-mini',
+      vendor: 'OpenAI',
+      family: 'gpt',
+      version: '',
+      maxInputTokens: 128000,
+      maxOutputTokens: 16384
+    };
+    openAIModelProvider.registerLanguageModel(openAIClient, 'gpt-4o-mini', modelMetadata);
   }
 
   const coqTokenizer = tokenizer.create(
