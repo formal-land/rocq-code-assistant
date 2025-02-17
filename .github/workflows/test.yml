@@ -1,0 +1,53 @@
+on:
+  push:
+    branches:
+      - main
+      - 'andreadlm@testing'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 🔭 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐫 Setup OCaml
+      uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: 5.3.0
+        dune-cache: true
+
+    - name: 🐓 Setup Coq
+      run: |
+        opam repo add coq-released https://coq.inria.fr/opam/released
+        opam pin add coq 8.20.0
+
+    - name: 🐓 Setup Coq LSP
+      run: opam install coq-lsp
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+
+    - name: 🗂️ Install dependencies
+      run: npm install
+
+    - name: 🏃🏻‍➡️ Test extension
+      run: xvfb-run -a npm test
+      if: runner.os == 'Linux'
+
+    - name: 🏃🏻‍➡️ Test extension
+      run: npm test
+      if: runner.os != 'Linux'
+
+    - name: 🏃🏻‍➡️ Test grammar
+      run: |
+        npx vscode-tmgrammar-test -g ./src/syntax/syntaxes/coq-proof.json ./src/test/syntaxes/basic.test.v
+        npx vscode-tmgrammar-test -g ./src/syntax/syntaxes/coq-proof.json ./src/test/syntaxes/advanced.test.v
+        npx vscode-tmgrammar-test -g ./src/syntax/syntaxes/coq-proof.json ./src/test/syntaxes/comments.test.v
+
+    
