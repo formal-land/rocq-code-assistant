@@ -2,13 +2,15 @@ on:
   push:
     branches:
       - main
-      - 'andreadlm@testing'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - name: 🔭 Checkout code
@@ -28,7 +30,7 @@ jobs:
     - name: 🐓 Setup Coq LSP
       run: opam install coq-lsp
 
-    - name: Setup Node.js
+    - name: 🟩 Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 18.x
@@ -44,7 +46,7 @@ jobs:
       run: npm test
       if: runner.os != 'Linux'
 
-    - name: 🏃🏻‍➡️ Test grammar
+    - name: 🏃🏻‍➡️ Test tmgrammar
       run: |
         npx vscode-tmgrammar-test -g ./src/syntax/syntaxes/coq-proof.json ./src/test/syntaxes/basic.test.v
         npx vscode-tmgrammar-test -g ./src/syntax/syntaxes/coq-proof.json ./src/test/syntaxes/advanced.test.v
