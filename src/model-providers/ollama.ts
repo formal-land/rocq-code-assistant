@@ -1,49 +1,25 @@
 import * as vscode from 'vscode';
-import * as ollama from 'ollama';
+import { Ollama } from 'ollama';
 
 export function init(host: string) {
-  return new ollama.Ollama({ host: host });
+  return new Ollama({ host });
 }
 
-export function registerLanguageModel(client: ollama.Ollama, model: ollama.ModelResponse, maxInputTokens: number, maxOutputTokens: number) {
-  
+export function registerLanguageModel(client: Ollama, model: string, metadata: vscode.ChatResponseProviderMetadata) {
   async function provideLanguageModelResponse(messages: vscode.LanguageModelChatMessage[], options: vscode.LanguageModelChatRequestOptions, extensionId: string, progress: vscode.Progress<vscode.ChatResponseFragment2>, token: vscode.CancellationToken) {
-    try {
-      const response = await client.chat({
-        model: model.name,
-        messages: messages.map(vscodeToOllamaMessage),
-        stream: true
+    const response = await client.chat({
+      model: model,
+      messages: messages.map(_vscodeToOllamaMessage),
+      stream: true
+    });
+
+    for await (const part of response) {
+      progress.report({ 
+        index: 0, 
+        part: new vscode.LanguageModelTextPart(part.message.content) 
       });
-
-      for await (const part of response)
-        progress.report({ index: 0, part: new vscode.LanguageModelTextPart(part.message.content) });  
-
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.cause !== undefined && error.cause instanceof Object &&
-            'message' in error.cause && typeof error.cause.message === 'string' &&
-            'code' in error.cause && typeof error.cause.code === 'string')
-          switch (error.cause.code) {
-            case 'ECONNREFUSED':
-              throw vscode.LanguageModelError.NotFound(error.cause.message); // TODO: better error type?
-            // ...other error codes of the same type to be added here...
-            default:
-              throw new vscode.LanguageModelError(error.cause.message);
-          }
-        else if ('status_code' in error && typeof error.status_code === 'number' &&
-                  'message' in error && typeof error.message === 'string')
-          switch (error.status_code) {
-            case 404:
-              throw vscode.LanguageModelError.NotFound(error.message);
-            // ...other error codes of the same type to be added here...
-            default:
-              throw new vscode.LanguageModelError(error.message);
-          }
-      } else {
-        throw new vscode.LanguageModelError(); // generic error
-      }
     }
-  }
+  } 
 
   function provideTokenCount(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken): Thenable<number> {
     if (typeof text === 'string') {
@@ -54,37 +30,31 @@ export function registerLanguageModel(client: ollama.Ollama, model: ollama.Model
     }
   }
 
-  let provider: vscode.LanguageModelChatProvider = {
+  let provider = {
     provideLanguageModelResponse,
     provideTokenCount
   };
 
-  let metadata = {
-    name: model.name,
-    version: '',
-    family: model.details.family,
-    vendor: 'ollama',
-    maxInputTokens,
-    maxOutputTokens
-  };
-
-  return vscode.lm.registerChatModelProvider(model.name, provider, metadata);
+  return vscode.lm.registerChatModelProvider(model, provider, metadata);
 }
 
-function mapRole(role: vscode.LanguageModelChatMessageRole) {
+function _vscodetoOllamaRole(role: vscode.LanguageModelChatMessageRole) {
   switch (role) {
     case 1: return 'user';
     case 2: return 'assistant';
-    // ... other roles to be added here ...
     default: return 'user';
   }
 }
 
-function vscodeToOllamaMessage(message: vscode.LanguageModelChatMessage): ollama.Message {
+function _vscodeToOllamaContent(content: vscode.LanguageModelTextPart | vscode.LanguageModelToolResultPart | vscode.LanguageModelToolCallPart) {
+  if (content instanceof vscode.LanguageModelTextPart)
+    return content.value;
+  else throw Error('Message type not supported');
+}
+
+function _vscodeToOllamaMessage(message: vscode.LanguageModelChatMessage) {
   return {
-    role: mapRole(message.role),
-    content: message.content
-      .map(part => (part instanceof vscode.LanguageModelTextPart) ? part.value : '') // No other part supported at the moment
-      .join('\n')
+    role: _vscodetoOllamaRole(message.role),
+    content: message.content.map(_vscodeToOllamaContent).join('')
   };
 }

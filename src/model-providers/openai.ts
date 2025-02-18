@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import OpenAI from 'openai';
 import * as tokenizer from 'tiktoken';
+import OpenAI from 'openai';
 import { ChatCompletionAssistantMessageParam, ChatCompletionUserMessageParam, ChatCompletionContentPartText } from 'openai/resources/index.mjs';
 
-export function init() {
-  return new OpenAI();
+export function init(apiKeyVarName: string) {
+  return new OpenAI({ apiKey: process.env[apiKeyVarName] });
 }
 
 export function registerLanguageModel(client: OpenAI, model: string, metadata: vscode.ChatResponseProviderMetadata) {
@@ -40,7 +40,7 @@ export function registerLanguageModel(client: OpenAI, model: string, metadata: v
     return encoder.encode(fullText).length;
   }
 
-  let provider: vscode.LanguageModelChatProvider = {
+  const provider = {
     provideLanguageModelResponse,
     provideTokenCount
   };
