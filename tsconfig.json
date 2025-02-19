@@ -19,6 +19,6 @@
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
 	"watchOptions": {
-    "watchFile": "dynamicPriorityPolling" // Neede on WSL
+    "watchFile": "dynamicPriorityPolling" // Needed on WSL
   }
 }

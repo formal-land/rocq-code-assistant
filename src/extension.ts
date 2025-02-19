@@ -125,10 +125,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   coqTokenizer = tokenizer.create(
     context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
-    [
-      { path: context.asAbsolutePath('./src/syntax/syntaxes/coq.json'), scopeName: 'source.coq' },
-      { path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }
-    ]
+    [{ path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }]
   );
 
   const regHelloWorld = vscode.commands.registerCommand(commands.HELLO_WORLD, helloWorldCallback);
