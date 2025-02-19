@@ -2,7 +2,7 @@ import { defineConfig } from '@vscode/test-cli';
 
 export default defineConfig(
   [{
-    label: 'miniF2F benchmark',
+    label: 'miniF2F',
     files: 'out/test/benchmarks/miniF2F/miniF2F.test.js',
     launchArgs: ['--enable-proposed-api=formal-land.rocq-coding-assistant'],
     workspaceFolder: './src/test/benchmarks/miniF2F/dataset',
