@@ -9,7 +9,7 @@ import * as extractors from './syntax/extractors';
 import * as basicLLM from './oracles/basic-LLM/basic-LLM';
 import { search } from './search';
 
-namespace commands {
+export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
   export const SELECT_MODEL = 'rocq-coding-assistant.select-model';
   export const SOLVE = 'rocq-coding-assistant.solve';
@@ -57,13 +57,13 @@ async function registerLanguageModels(context: vscode.ExtensionContext) {
     context.subscriptions.push(regModel);
   }
 
-  const registeredModels = (await vscode.lm.selectChatModels());
+  const registeredModels = await vscode.lm.selectChatModels();
   if (registeredModels.length === 1)
     selectedModel = registeredModels[0];
 }
 
 async function selectModelCallback() {
-  const models = (await vscode.lm.selectChatModels());
+  const models = await vscode.lm.selectChatModels();
 
   function _modelQuickPickItemDetail(model: vscode.LanguageModelChat) {
     const details = [];
@@ -93,48 +93,52 @@ async function selectModelCallback() {
 
 function helloWorldCallback() {
   vscode.window.showInformationMessage('Hello World from Rocq coding assistant!');
+  return 0;
 }
 
-async function solveCallback() {
+async function solveCallback(proofName?: string) {
   while (!selectedModel) 
     await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
 
-  if (!coqLSPClient) return Promise.reject('Coq LSP client not started');
-
   const editor = vscode.window.activeTextEditor;
-  if (!editor || !coqTokenizer) return;
+
+  if (!coqLSPClient || !coqTokenizer || !editor) return -1;
 
   const text = editor.document.getText();
   const tokenizedText = await coqTokenizer.tokenize(text, 'source.coq.proof');
   const splittedText = text.split(/\r?\n|\r|\n/g);
 
-  const proof = extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, splittedText, tokenizedText);
-  if (proof === undefined) { 
+  const proof = proofName ?
+    extractors.extractProofFromName(editor.document.uri.toString(), proofName, splittedText, tokenizedText) :
+    extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, splittedText, tokenizedText);
+
+  if (!proof) { 
     vscode.window.showErrorMessage('Not in a theorem'); 
-    return; 
+    return -1; 
   }
 
-  search(proof, coqLSPClient, [basicLLM.create(selectedModel)]);
+  return 0;
+  //search(proof, coqLSPClient, [basicLLM.create(selectedModel)]);
 }
 
 export async function activate(context: vscode.ExtensionContext) {
   coqLSPClient = cpqLSP.create();
   coqLSPClient.start();
 
-  registerLanguageModels(context);
+  await registerLanguageModels(context);
 
   coqTokenizer = tokenizer.create(
     context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
     [{ path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }]
   );
 
-  const regHelloWorld = vscode.commands.registerCommand(commands.HELLO_WORLD, helloWorldCallback);
+  const regHelloWorld = vscode.commands.registerCommand(Commands.HELLO_WORLD, helloWorldCallback);
   context.subscriptions.push(regHelloWorld);
 
-  const regSelectModel = vscode.commands.registerCommand(commands.SELECT_MODEL, selectModelCallback);
+  const regSelectModel = vscode.commands.registerCommand(Commands.SELECT_MODEL, selectModelCallback);
   context.subscriptions.push(regSelectModel);
 
-  const regSolve = vscode.commands.registerCommand(commands.SOLVE, solveCallback);
+  const regSolve = vscode.commands.registerCommand(Commands.SOLVE, solveCallback);
   context.subscriptions.push(regSolve);
 }
 
