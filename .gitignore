@@ -5,3 +5,4 @@ node_modules
 *.vsix
 *.d.ts
 src/test/benchmarks/**/dataset/
+src/test/benchmarks/**/.vscode
