@@ -2,30 +2,34 @@ import * as vscode from 'vscode';
 import * as tokenizer from 'tiktoken';
 import OpenAI from 'openai';
 import { ChatCompletionAssistantMessageParam, ChatCompletionUserMessageParam, ChatCompletionContentPartText } from 'openai/resources/index.mjs';
+import { ModelProviderMetadata } from './types';
 
-export function init(apiKeyVarName: string) {
-  return new OpenAI({ apiKey: process.env[apiKeyVarName] });
-}
-
-export function registerLanguageModel(client: OpenAI, model: string, metadata: vscode.ChatResponseProviderMetadata) {
-  async function provideLanguageModelResponse(messages: vscode.LanguageModelChatMessage[], options: vscode.LanguageModelChatRequestOptions, extensionId: string, progress: vscode.Progress<vscode.ChatResponseFragment2>, token: vscode.CancellationToken) {
+export function create(model: string, metadata: ModelProviderMetadata, apiKeyVarName: string): vscode.LanguageModelChat {
+  const client = new OpenAI({ apiKey: process.env[apiKeyVarName] });
+  
+  async function sendRequest(messages: vscode.LanguageModelChatMessage[], options?: vscode.LanguageModelChatRequestOptions, token?: vscode.CancellationToken) {
     const stream = await client.chat.completions.create({
       model: model,
       messages: messages.map(_vscodeToOpenAIMessage),
       stream: true,
     });
 
-    for await (const chunk of stream) {
-      progress.report({ 
-        index: 0, 
-        part: new vscode.LanguageModelTextPart(chunk.choices[0]?.delta?.content || '') 
-      });
-    } 
+    async function* responseTextGenerator() {
+      for await (const chunk of stream)
+        yield chunk.choices[0]?.delta?.content || '';
+    }
+    
+    async function* responseStreamGenerator() {
+      for await (const chunk of stream)
+        yield new vscode.LanguageModelTextPart(chunk.choices[0]?.delta?.content || '');
+    }
+
+    return { stream: responseStreamGenerator(), text: responseTextGenerator() };
   }
   
   const encoder = tokenizer.encoding_for_model(<tokenizer.TiktokenModel>model);
 
-  async function provideTokenCount(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken): Promise<number> {
+  async function countTokens(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken) {
     let fullText;
     
     if (typeof text === 'string')
@@ -40,12 +44,7 @@ export function registerLanguageModel(client: OpenAI, model: string, metadata: v
     return encoder.encode(fullText).length;
   }
 
-  const provider = {
-    provideLanguageModelResponse,
-    provideTokenCount
-  };
-
-  return vscode.lm.registerChatModelProvider(model, provider, metadata);
+  return { id: `rocq-coding-assistat:${model}`, ...metadata, sendRequest, countTokens };
 }
 
 function _vscodeToOpenAIRole(role: vscode.LanguageModelChatMessageRole) {

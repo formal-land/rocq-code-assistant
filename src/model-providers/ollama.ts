@@ -1,41 +1,50 @@
 import * as vscode from 'vscode';
 import { Ollama } from 'ollama';
+import { ModelProviderMetadata } from './types';
 
-export function init(host: string) {
-  return new Ollama({ host });
-}
+export async function create(model: string, metadata: ModelProviderMetadata, host: string) {
+  const client = new Ollama({ host });
+  
+  const ollamaProvidedModels = (await client.list()).models; 
+  if (!ollamaProvidedModels.find(ollamaModel => ollamaModel.name === model))
+    throw Error('Model not found');
 
-export function registerLanguageModel(client: Ollama, model: string, metadata: vscode.ChatResponseProviderMetadata) {
-  async function provideLanguageModelResponse(messages: vscode.LanguageModelChatMessage[], options: vscode.LanguageModelChatRequestOptions, extensionId: string, progress: vscode.Progress<vscode.ChatResponseFragment2>, token: vscode.CancellationToken) {
-    const response = await client.chat({
+  async function sendRequest(messages: vscode.LanguageModelChatMessage[], options?: vscode.LanguageModelChatRequestOptions, token?: vscode.CancellationToken) {
+    const stream = await client.chat({
       model: model,
       messages: messages.map(_vscodeToOllamaMessage),
       stream: true
     });
 
-    for await (const part of response) {
-      progress.report({ 
-        index: 0, 
-        part: new vscode.LanguageModelTextPart(part.message.content) 
-      });
+    async function* responseTextGenerator() {
+      for await (const chunk of stream)
+        yield chunk.message.content;
     }
+        
+    async function* responseStreamGenerator() {
+      for await (const chunk of stream)
+        yield new vscode.LanguageModelTextPart(chunk.message.content);
+    }
+    
+    return { stream: responseStreamGenerator(), text: responseTextGenerator() };
   } 
 
-  function provideTokenCount(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken): Thenable<number> {
-    if (typeof text === 'string') {
-      return Promise.resolve(text.length); // Simplified token count for string
-    } else {
-      const message = text as vscode.LanguageModelChatMessage;
-      return Promise.resolve(message.content.length); // Simplified token count for LanguageModelChatMessage
-    }
+  async function countTokens(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken) {
+    let fullText;
+    
+    if (typeof text === 'string')
+      fullText = text;
+    else
+      fullText = text.content
+        .map(part => {
+          if (part instanceof vscode.LanguageModelTextPart) return part.value;
+          else throw Error('Message type not supported'); })
+        .join('');
+
+    return fullText.length;
   }
 
-  let provider = {
-    provideLanguageModelResponse,
-    provideTokenCount
-  };
-
-  return vscode.lm.registerChatModelProvider(model, provider, metadata);
+  return { id: `rocq-coding-assistat:${model}`, ...metadata, sendRequest, countTokens };
 }
 
 function _vscodetoOllamaRole(role: vscode.LanguageModelChatMessageRole) {
