@@ -1,4 +1,5 @@
 export interface ModelProviderMetadata {
+	readonly id: string,
   readonly vendor: string;
 	readonly name: string;
 	readonly family: string;

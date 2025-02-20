@@ -44,7 +44,7 @@ export function create(model: string, metadata: ModelProviderMetadata, apiKeyVar
     return encoder.encode(fullText).length;
   }
 
-  return { id: `rocq-coding-assistat:${model}`, ...metadata, sendRequest, countTokens };
+  return { ...metadata, sendRequest, countTokens };
 }
 
 function _vscodeToOpenAIRole(role: vscode.LanguageModelChatMessageRole) {

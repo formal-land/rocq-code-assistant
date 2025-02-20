@@ -16,76 +16,46 @@ export namespace Commands {
 let coqLSPClient: LanguageClient | undefined;
 let selectedModel: vscode.LanguageModelChat | undefined;
 let coqTokenizer: tokenizer.Tokenizer | undefined;
-const registeredModels: vscode.LanguageModelChat[] = [];
+let registeredModels: vscode.LanguageModelChat[] = [];
 
-async function registerLanguageModels() {
-  const isOllamaEnabled = utils.getConfBoolean('ollama.enabled', false);
-  if (isOllamaEnabled) {
-    const hostAddress = utils.getConfString('ollama.host.address', '127.0.0.1');
-    const hostPort = utils.getConfString('ollama.host.port', '11434');
-    const host = `http://${hostAddress}:${hostPort}`;
+export async function activate(context: vscode.ExtensionContext) {
+  coqLSPClient = cpqLSP.create();
+  coqLSPClient.start();
 
-    const modelMetadata = {
-      name: utils.getConfString('ollama.model.name', ''),
-      vendor: 'Ollama',
-      family: '',
-      version: '',
-      maxInputTokens: Infinity,
-      maxOutputTokens: Infinity
-    };
+  coqTokenizer = tokenizer.create(
+    context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
+    [{ path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }]
+  );
 
-    const ollamaModelProvider = await ollama.create(modelMetadata.name, modelMetadata, host);
-    registeredModels.push(ollamaModelProvider);
-  }
+  updateLanguageModels();
 
-  const isOpenAIEnabled = utils.getConfBoolean('openai.enabled', false);
-  if (isOpenAIEnabled) {
-    const modelMetadata = {
-      name: utils.getConfString('openai.model.name', 'o1-mini'),
-      vendor: 'OpenAI',
-      family: '',
-      version: '',
-      maxInputTokens: utils.getConfNumber('openai.model.context-widows', 200000),
-      maxOutputTokens: utils.getConfNumber('openai.model.max-output-tokens', 100000)
-    };
-    const openAIModelProvider = openAI.create(
-      modelMetadata.name, modelMetadata, utils.getConfString('openai.api-key-var-name', 'OPENAI_API_KEY'));
-    registeredModels.push(openAIModelProvider);
-  }
+  const regDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration(didChangeConfigurationCallback);
+  context.subscriptions.push(regDidChangeConfiguration);
 
-  if (registeredModels.length === 1)
-    selectedModel = registeredModels[0];
+  await updateLanguageModels();
+
+  const regHelloWorld = vscode.commands.registerCommand(Commands.HELLO_WORLD, helloWorldCallback);
+  context.subscriptions.push(regHelloWorld);
+
+  const regSelectModel = vscode.commands.registerCommand(Commands.SELECT_MODEL, selectModelCallback);
+  context.subscriptions.push(regSelectModel);
+
+  const regSolve = vscode.commands.registerCommand(Commands.SOLVE, solveCallback);
+  context.subscriptions.push(regSolve);
 }
 
-async function selectModelCallback() {
-  function _modelQuickPickItemDetail(model: vscode.LanguageModelChat) {
-    const details = [];
-  
-    if (model.family) details.push(`family: ${model.family}`);
-    if (model.version) details.push(`version: ${model.version}`);
-    if (model.vendor) details.push(`vendor: ${model.vendor}`);
-  
-    return details.join(', ');
-  }
-
-  const quickPickItems = registeredModels
-    .toSorted((model1, model2) => {
-      if (model1 === selectedModel) return -1;
-      if (model2 === selectedModel) return 1;
-      else return 0; })
-    .map(model => ({
-      id: model.id,
-      label: `$(sparkle) ${model.name}`,
-      description: model === selectedModel ? 'Selected' : undefined,
-      detail: _modelQuickPickItemDetail(model) }));
-
-  const result = await vscode.window.showQuickPick(quickPickItems);
-  if (result)
-    selectedModel = registeredModels.find(model => model.id === result.id);
+export function deactivate() {
+  if (coqLSPClient && coqLSPClient.isRunning()) 
+    coqLSPClient.dispose();
 }
 
-function helloWorldCallback() {
-  vscode.window.showInformationMessage('Hello World from Rocq coding assistant!');
+async function helloWorldCallback() {
+  const response = await selectedModel?.sendRequest([ vscode.LanguageModelChatMessage.User('Hello world!') ]);
+  let answer = [];
+  if (response)
+    for await (const chunk of response.text)
+      answer.push(chunk);
+  vscode.window.showInformationMessage(answer.join(' '));
   return 0;
 }
 
@@ -113,28 +83,100 @@ async function solveCallback(proofName?: string) {
   //search(proof, coqLSPClient, [basicLLM.create(selectedModel)]);
 }
 
-export async function activate(context: vscode.ExtensionContext) {
-  coqLSPClient = cpqLSP.create();
-  coqLSPClient.start();
+async function selectModelCallback(modelId?: string) {
+  function _modelQuickPickItemDetail(model: vscode.LanguageModelChat) {
+    const details = [];
+  
+    if (model.family) details.push(`family: ${model.family}`);
+    if (model.version) details.push(`version: ${model.version}`);
+    if (model.vendor) details.push(`vendor: ${model.vendor}`);
+  
+    return details.join(', ');
+  }
 
-  await registerLanguageModels();
+  const quickPickItems = registeredModels
+    .toSorted((model1, model2) => {
+      if (model1 === selectedModel) return -1;
+      if (model2 === selectedModel) return 1;
+      else return 0; })
+    .map(model => ({
+      id: model.id,
+      label: `$(sparkle) ${model.name}`,
+      description: model === selectedModel ? 'Selected' : undefined,
+      detail: _modelQuickPickItemDetail(model) }));
 
-  coqTokenizer = tokenizer.create(
-    context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
-    [{ path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }]
-  );
+  if (!modelId)
+    modelId = (await vscode.window.showQuickPick(quickPickItems))?.id;
 
-  const regHelloWorld = vscode.commands.registerCommand(Commands.HELLO_WORLD, helloWorldCallback);
-  context.subscriptions.push(regHelloWorld);
+  const pickedModel = registeredModels.find(model => model.id === modelId);
+  if (pickedModel)
+    selectedModel = pickedModel;
 
-  const regSelectModel = vscode.commands.registerCommand(Commands.SELECT_MODEL, selectModelCallback);
-  context.subscriptions.push(regSelectModel);
-
-  const regSolve = vscode.commands.registerCommand(Commands.SOLVE, solveCallback);
-  context.subscriptions.push(regSolve);
+  return 0;
 }
 
-export function deactivate() {
-  if (coqLSPClient && coqLSPClient.isRunning()) 
-    coqLSPClient.dispose();
+async function updateLanguageModels() {
+  updateOllamaLanguageModel();
+  updateOpenAILanguageModel();
+}
+
+async function updateOllamaLanguageModel() {
+  registeredModels = registeredModels.filter(model => model.vendor !== 'Ollama');
+
+  const isOllamaEnabled = utils.getConfBoolean('provider.ollama.enabled', false);
+  if (!isOllamaEnabled) return;
+
+  const hostAddress = utils.getConfString('provider.ollama.host.address', '127.0.0.1');
+  const hostPort = utils.getConfString('provider.ollama.host.port', '11434');
+  const host = `http://${hostAddress}:${hostPort}`;
+
+  const modelMetadata = {
+    id: `rocq-coding-assistant:${utils.getConfString('provider.ollama.model.name', '')}`,
+    name: utils.getConfString('provider.ollama.model.name', ''),
+    vendor: 'Ollama',
+    family: '',
+    version: '',
+    maxInputTokens: Infinity,
+    maxOutputTokens: Infinity
+  };
+
+  const ollamaModelProvider = await ollama.create(modelMetadata.name, modelMetadata, host);
+  registeredModels.push(ollamaModelProvider);
+
+  if (registeredModels.length === 1)
+    selectedModel = registeredModels[0];
+}
+
+async function updateOpenAILanguageModel() {
+  registeredModels = registeredModels.filter(model => model.vendor !== 'OpenAI');
+
+  const isOpenAIEnabled = utils.getConfBoolean('provider.openai.enabled', false);
+  if (!isOpenAIEnabled) return;
+
+  const modelMetadata = {
+    id: `rocq-coding-assistant:${utils.getConfString('provider.openai.model.name', 'o1-mini')}`,
+    name: utils.getConfString('provider.openai.model.name', 'o1-mini'),
+    vendor: 'OpenAI',
+    family: '',
+    version: '',
+    maxInputTokens: utils.getConfNumber('provider.openai.model.context-widows', 200000),
+    maxOutputTokens: utils.getConfNumber('provider.openai.model.max-output-tokens', 100000)
+  };
+
+  const openAIModelProvider = openAI.create(
+    modelMetadata.name, modelMetadata, utils.getConfString('provider.openai.api-key-var-name', 'OPENAI_API_KEY'));
+  registeredModels.push(openAIModelProvider);
+
+  if (registeredModels.length === 1)
+    selectedModel = registeredModels[0];
+}
+
+function didChangeConfigurationCallback(event: vscode.ConfigurationChangeEvent) {
+  if (!event.affectsConfiguration('rocq-coding-assistant'))
+    return;
+
+  if (event.affectsConfiguration('rocq-coding-assistant.provider.ollama'))
+    updateOllamaLanguageModel();
+  if (event.affectsConfiguration('rocq-coding-assistant.provider.openai'))
+    updateOpenAILanguageModel();
 }

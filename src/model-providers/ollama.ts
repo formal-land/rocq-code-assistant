@@ -44,7 +44,7 @@ export async function create(model: string, metadata: ModelProviderMetadata, hos
     return fullText.length;
   }
 
-  return { id: `rocq-coding-assistat:${model}`, ...metadata, sendRequest, countTokens };
+  return { ...metadata, sendRequest, countTokens };
 }
 
 function _vscodetoOllamaRole(role: vscode.LanguageModelChatMessageRole) {
