@@ -32,7 +32,6 @@ suite('miniF2F benchmark', () => {
   datasetDescription
     .flatMap(({ file, theorems }) =>
       theorems.map(theorem => ({ file: file, theorem: theorem })))
-    .slice(0, 1)
     .forEach(({ file, theorem }) => 
       test(`Test ${file}:${theorem}`, () => _testTheorem(file, theorem)));
 });
