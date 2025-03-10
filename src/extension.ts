@@ -26,8 +26,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   coqTokenizer = tokenizer.create(
     context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
-    [{ path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' }]
-  );
+    [ { path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' },
+      { path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof-body.json'), scopeName: 'source.coq.proof.body'} ]);
 
   updateLanguageModels();
 
