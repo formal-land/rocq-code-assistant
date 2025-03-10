@@ -1,0 +1,60 @@
+{
+  "fileTypes": ["v"],
+  "name": "Coq proofs body",
+  "patterns": [
+    { "include": "#tactic" },
+    { "include": "#focusing_construct" },
+    { "include": "#block_comment" }
+  ],
+  "repository": {
+    "tactic": {
+      "begin": "(?=[a-zA-Z]|_|\\p{L})",
+      "end": "(?<=\\.)(?!\\S)",
+      "name": "meta.proof.body.tactic.coq",
+      "patterns": [
+        { "include": "#admits" }
+      ]
+    },
+    "admits": {
+      "begin": "(?=admit)",
+      "end": "(?<=\\.|;)(?!\\S)",
+      "name": "meta.proof.body.tactic.admit.coq"
+    },
+    "focusing_construct": {
+      "match": "(?<!\\w)([-\\+\\*\\{\\}])(?!\\w)",
+      "name": "meta.proof.body.focus.coq"
+    },
+    "block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.coq",
+      "patterns": [
+        {
+          "include": "#block_comment"
+        },
+        {
+          "include": "#block_double_quoted_string"
+        }
+      ]
+    },
+    "block_double_quoted_string": {
+      "applyEndPatternLast": 1,
+      "begin": "\"",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.coq"
+        }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.coq"
+        }
+      },
+      "name": "string.quoted.double.coq"
+    }
+  },
+  "scopeName": "source.coq.proof.body",
+  "uuid": "3fd2630c-19d6-4101-afa3-2b73ffc87bb2"
+}

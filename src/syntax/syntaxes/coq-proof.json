@@ -33,9 +33,7 @@
       "end": "(?=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
       "name": "meta.proof.body.coq",
       "patterns": [
-        { "include": "#tactic" },
-        { "include": "#focusing_construct" },
-        { "include": "#block_comment" }
+        { "include": "source.coq.proof.body" }
       ]
     },
     "proof_token" : {
@@ -56,23 +54,6 @@
       "begin": "(?<=\\:\\s*)",
       "end": "(?=\\s*\\.(?!\\S))",
       "name": "meta.proof.head.type.coq"
-    },
-    "tactic": {
-      "begin": "(?=[a-zA-Z]|_|\\p{L})",
-      "end": "(?<=\\.)(?!\\S)",
-      "name": "meta.proof.body.tactic.coq",
-      "patterns": [
-        { "include": "#admits" }
-      ]
-    },
-    "admits": {
-      "begin": "(?=admit)",
-      "end": "(?<=\\.|;)(?!\\S)",
-      "name": "meta.proof.body.tactic.admit.coq"
-    },
-    "focusing_construct": {
-      "match": "(?<!\\w)([-\\+\\*\\{\\}])(?!\\w)",
-      "name": "meta.proof.body.focus.coq"
     },
     "block_comment": {
       "applyEndPatternLast": 1,
