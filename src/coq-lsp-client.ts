@@ -26,19 +26,21 @@ export namespace Request {
   }
 }
 
-export function create() { 
-  const clientOptions = {
-    documentSelector: CoqSelector.owned
-  };
+let client: LanguageClient | undefined;
+
+export function get() { 
+  if (!client) {
+    const clientOptions = { documentSelector: CoqSelector.owned };
   
-  const serverOptions = {
-    command: utils.getConfString('coq-lsp-path', 'coq-lsp')
-  };
+    const serverOptions = { command: utils.getConfString('coq-lsp-path', 'coq-lsp') };
   
-  return new LanguageClient(
-    'rocq-coding-assistant-client',
-    'Rocq coding assistant client',
-    serverOptions,
-    clientOptions
-  );
+    client = new LanguageClient(
+      'rocq-coding-assistant-client',
+      'Rocq coding assistant client',
+      serverOptions,
+      clientOptions
+    );
+  }
+
+  return client;
 }

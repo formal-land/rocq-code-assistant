@@ -2,10 +2,12 @@ import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 import * as utils from './utils';
 import * as tokenizer from './syntax/tokenizer';
-import * as cpqLSP from './coq-lsp-client';
+import * as coqLSP from './coq-lsp-client';
 import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
+import { search } from './search';
+import * as BasicLLM from './oracles/basic-LLM/basic-LLM';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -19,7 +21,7 @@ let coqTokenizer: tokenizer.Tokenizer | undefined;
 let registeredModels: vscode.LanguageModelChat[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
-  coqLSPClient = cpqLSP.create();
+  coqLSPClient = coqLSP.get();
   coqLSPClient.start();
 
   coqTokenizer = tokenizer.create(
@@ -40,7 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const regSelectModel = vscode.commands.registerCommand(Commands.SELECT_MODEL, selectModelCallback);
   context.subscriptions.push(regSelectModel);
 
-  const regSolve = vscode.commands.registerCommand(Commands.SOLVE, solveCallback);
+  const regSolve = vscode.commands.registerTextEditorCommand(Commands.SOLVE, solveCallback);
   context.subscriptions.push(regSolve);
 }
 
@@ -59,7 +61,7 @@ async function helloWorldCallback() {
   return 0;
 }
 
-async function solveCallback(proofName?: string) {
+async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextEditorEdit, resource?: any, proofName?: string) {
   while (!selectedModel) 
     await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
 
@@ -71,16 +73,17 @@ async function solveCallback(proofName?: string) {
   const tokenizedText = await coqTokenizer.tokenize(text, 'source.coq.proof');
   const splittedText = text.split(/\r?\n|\r|\n/g);
 
-  const proof = proofName ?
+  const proof = await (proofName ?
     extractors.extractProofFromName(editor.document.uri.toString(), proofName, splittedText, tokenizedText) :
-    extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, splittedText, tokenizedText);
+    extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, splittedText, tokenizedText));
 
   if (!proof) { 
-    vscode.window.showErrorMessage('Not in a theorem'); 
+    vscode.window.showErrorMessage('Not a theorem'); 
     return -1; 
   }
+
+  search(proof, [BasicLLM.create(selectedModel)]);
   return 0;
-  //search(proof, coqLSPClient, [basicLLM.create(selectedModel)]);
 }
 
 async function selectModelCallback(modelId?: string) {

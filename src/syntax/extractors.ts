@@ -51,7 +51,7 @@ function flatTokens(tokenizedLines: vsctm.ITokenizeLineResult[]) {
   );
 }
 
-function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.IToken, number][]): ProofMeta {
+async function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.IToken, number][]) {
   tokens = tokens
     .filter(([token, lineIdx]) => 
       !token.scopes.includes('comment.block.coq') && 
@@ -86,7 +86,7 @@ function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.IToken
     .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
   
   const proofMeta = new ProofMeta(uri, keyword, name, type, location, admitsLocations);
-  proofMeta.insert(body);
+  await proofMeta.insert(body);
 
   return proofMeta;
 }
