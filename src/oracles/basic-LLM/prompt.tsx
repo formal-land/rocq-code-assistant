@@ -17,16 +17,16 @@ export class Prompt extends PromptElement<PromptProps> {
 	render() {
 		return (
 			<>
-				<AssistantMessage priority={100}>
+				<AssistantMessage priority={ 100 }>
 					You are a Coq expert. 
 					<br />
-					Your task is to help the user to prove his theorems.
+					You will be provided with a description of a theorem and your task is to solve it.
 					<br />
-					Return one or more valid Coq tactics to solve the goal. Put the tactics in a Markdown 
+					Return one valid Coq tactic to advance in the proof. Put the tactic in a Markdown 
 					code block that begins with ```coq and ends with ```.
 					<br />
 				</AssistantMessage>
-				<GoalMessage goal={this.props.goal} />
+				<GoalMessage goal={ this.props.goal } />
 			</>
 		);
 	}
@@ -38,21 +38,27 @@ interface GoalMessagePrompt extends BasePromptElementProps {
 
 class GoalMessage extends PromptElement<GoalMessagePrompt> {
 	render() {
-		const hypotesis = this.props.goal.hyps.flatMap(
-			block => block.names.map(name => 
+		let hypotesis;
+
+		if (this.props.goal.hyps.length > 0) {
+			hypotesis =
 				<>
-					{block.ty}: {name}
-					<br />
+					You can use the following hypotesis: <br />
+					{ 
+						this.props.goal.hyps.flatMap(block => block.names.map(name => 
+							<> 
+								* { block.ty }: { name } <br /> 
+							</>
+						))
+					}
 				</>
-			)
-		);
+		}
 		
 		return (
       <UserMessage>
-        The goal you have to prove is: <br />
-        {this.props.goal.ty} <br />
-        You can use the following hypotesis: <br />
-        {hypotesis}
+        The goal you have to prove is: <br /> <br />
+        { this.props.goal.ty } <br />
+        { hypotesis }
       </UserMessage>
 		);
 	}
