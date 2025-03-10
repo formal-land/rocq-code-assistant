@@ -85,8 +85,8 @@ async function proofFromTokens(uri: string, textLines: string[], tokens: [vsctm.
       token.scopes.includes('meta.proof.body.tactic.admit.coq'))
     .map(([token, lineIdx]) => new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex));
   
-  const proofMeta = new ProofMeta(uri, keyword, name, type, location, admitsLocations);
-  await proofMeta.insert(body);
+  const proofMeta = await ProofMeta.init(uri, keyword, name, type, location, admitsLocations);
+  await proofMeta.body.insert(body);
 
   return proofMeta;
 }
