@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CoqLSPClient } from '../coq-lsp-client';
 import { Request } from '../coq-lsp-client';
 import { PetState } from '../lib/coq-lsp/types';
+import { Name } from './const';
 
 type ProofElement = ProofBlock | string;
 
@@ -27,7 +28,7 @@ class ProofBlock {
     if (!this.open) throw Error('Proof completed');
 
     for (const token of tokens) {
-      const nextElement = token.tags.includes('meta.proof.body.tactic.admit.coq') ?
+      const nextElement = token.tags.includes(Name.TACTIC) ?
         new ProofBlock(this.state) : token.value;
       this.state = await CoqLSPClient
         .get()

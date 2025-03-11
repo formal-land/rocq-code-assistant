@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
+import { Scope } from './const';
 
 const NEW_LINE_REGEX = /\r?\n|\r|\n/g;
 
@@ -28,8 +29,8 @@ export class Tokenizer {
       });
 
     const grammars = [ 
-      { path: path.join(__dirname, ('../../resources/syntaxes/coq-proof.json')), scopeName: 'source.coq.proof' },
-      { path: path.join(__dirname, ('../../resources/syntaxes/coq-proof-body.json')), scopeName: 'source.coq.proof.body'} 
+      { path: path.join(__dirname, ('../../resources/syntaxes/coq-proof.json')), scopeName: Scope.PROOF },
+      { path: path.join(__dirname, ('../../resources/syntaxes/coq-proof-body.json')), scopeName: Scope.PROOF_BODY } 
     ];
 
     this.registry = new vsctm.Registry({
