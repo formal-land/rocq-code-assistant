@@ -1,4 +1,3 @@
-import { error } from 'console';
 import * as vscode from 'vscode';
 
 export function getConfNumber(name: string, def: number) {

@@ -33,6 +33,7 @@ export class CoqLSPClient extends LanguageClient {
     if (!this.instance) this.instance = new CoqLSPClient;
     return this.instance;
   }
+  
   private constructor() {
     const clientOptions = { documentSelector: CoqSelector.owned };
     const serverOptions = { command: utils.getConfString('coq-lsp-path', 'coq-lsp') };
