@@ -26,21 +26,21 @@ export namespace Request {
   }
 }
 
-let client: LanguageClient | undefined;
+export class CoqLSPClient extends LanguageClient {
+  private static instance?: CoqLSPClient;
 
-export function get() { 
-  if (!client) {
+  static get() {
+    if (!this.instance) this.instance = new CoqLSPClient;
+    return this.instance;
+  }
+  private constructor() {
     const clientOptions = { documentSelector: CoqSelector.owned };
-  
     const serverOptions = { command: utils.getConfString('coq-lsp-path', 'coq-lsp') };
-  
-    client = new LanguageClient(
+    super(
       'rocq-coding-assistant-client',
       'Rocq coding assistant client',
       serverOptions,
       clientOptions
     );
   }
-
-  return client;
 }

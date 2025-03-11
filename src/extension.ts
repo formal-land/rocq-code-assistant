@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { LanguageClient } from 'vscode-languageclient/node';
 import * as utils from './utils';
 import { Tokenizer } from './syntax/tokenizer';
-import * as coqLSP from './coq-lsp-client';
+import { CoqLSPClient } from './coq-lsp-client';
 import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
@@ -15,15 +14,13 @@ export namespace Commands {
   export const SOLVE = 'rocq-coding-assistant.solve';
 }
 
-let coqLSPClient: LanguageClient;
+let coqLSPClient: CoqLSPClient;
 let coqTokenizer: Tokenizer;
 let selectedModel: vscode.LanguageModelChat | undefined;
 let registeredModels: vscode.LanguageModelChat[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
-  coqLSPClient = coqLSP.get();
-  coqLSPClient.start();
-  
+  coqLSPClient = CoqLSPClient.get();
   coqTokenizer = Tokenizer.get();
 
   updateLanguageModels();

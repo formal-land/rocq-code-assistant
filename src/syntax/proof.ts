@@ -1,16 +1,11 @@
 import * as vscode from 'vscode';
-import * as coqLSP from '../coq-lsp-client';
+import { CoqLSPClient } from '../coq-lsp-client';
 import { Request } from '../coq-lsp-client';
 import { PetState } from '../lib/coq-lsp/types';
 
-export interface ProofToken {
-  value: string,
-  tags: string[]
-}
+type ProofElement = ProofBlock | string;
 
-type ProofElement = ProofBlock | ProofToken;
-
-export class ProofBlock {
+class ProofBlock {
   private state: PetState;
   private open: boolean = true;
   private elements: ProofElement[] = [];
@@ -23,36 +18,35 @@ export class ProofBlock {
     const openSubProofs = this.elements.flatMap(element =>
       element instanceof ProofBlock ? element.openSubProofs() : []);
 
-    if (this.open)
-      openSubProofs.push(this);
+    if (this.open) openSubProofs.push(this);
     
     return openSubProofs;
   }
 
-  async insert(tokens: ProofToken[]) {
+  async insert(tokens: { value: string, tags: string[] }[] ) {
     if (!this.open) throw Error('Proof completed');
 
     for (const token of tokens) {
       const nextElement = token.tags.includes('meta.proof.body.tactic.admit.coq') ?
-        new ProofBlock(this.state) : token;
-      this.state = await coqLSP
+        new ProofBlock(this.state) : token.value;
+      this.state = await CoqLSPClient
         .get()
         .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value });
       this.elements.push(nextElement);
     }
 
-    const goals = await coqLSP
+    const goals = await CoqLSPClient
       .get()
       .sendRequest(Request.Petanque.goals, { st: this.state.st });
     if (goals.goals.length === 0)
       this.open = false;
   }
 
-  async goal() {
-    const goals = await coqLSP
+  async goals() {
+    const goals = await CoqLSPClient
       .get()
       .sendRequest(Request.Petanque.goals, { st: this.state.st });
-    return goals.goals[0];
+    return goals.goals;
   }
 
   deepcopy(): ProofBlock {
@@ -74,7 +68,7 @@ export class ProofMeta {
   readonly admitsLocations: vscode.Range[];
 
   static async init(uri: string, keyword: string, name: string, type: string, location: vscode.Range, admitsLocations: vscode.Range[]) {
-    const startingState = await coqLSP
+    const startingState = await CoqLSPClient
       .get()
       .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null });
     return new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location, admitsLocations);
@@ -88,6 +82,13 @@ export class ProofMeta {
     this.uri = uri;
     this.location = location;
     this.admitsLocations = admitsLocations;
+  }
+
+  async goals() {
+    const goals = await Promise.all(this.body
+      .openSubProofs()
+      .map(openSubProof => openSubProof.goals()));
+    return goals.flat();
   }
 
   deepcopy() {
