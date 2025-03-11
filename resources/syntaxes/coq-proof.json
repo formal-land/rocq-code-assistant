@@ -63,27 +63,8 @@
       "patterns": [
         {
           "include": "#block_comment"
-        },
-        {
-          "include": "#block_double_quoted_string"
         }
       ]
-    },
-    "block_double_quoted_string": {
-      "applyEndPatternLast": 1,
-      "begin": "\"",
-      "beginCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.begin.coq"
-        }
-      },
-      "end": "\"",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.definition.string.end.coq"
-        }
-      },
-      "name": "string.quoted.double.coq"
     }
   },
   "scopeName": "source.coq.proof",
