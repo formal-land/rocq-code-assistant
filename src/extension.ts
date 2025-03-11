@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 import * as utils from './utils';
-import * as tokenizer from './syntax/tokenizer';
+import { Tokenizer } from './syntax/tokenizer';
 import * as coqLSP from './coq-lsp-client';
 import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
@@ -15,19 +15,16 @@ export namespace Commands {
   export const SOLVE = 'rocq-coding-assistant.solve';
 }
 
-let coqLSPClient: LanguageClient | undefined;
+let coqLSPClient: LanguageClient;
+let coqTokenizer: Tokenizer;
 let selectedModel: vscode.LanguageModelChat | undefined;
-let coqTokenizer: tokenizer.Tokenizer | undefined;
 let registeredModels: vscode.LanguageModelChat[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
   coqLSPClient = coqLSP.get();
   coqLSPClient.start();
-
-  coqTokenizer = tokenizer.create(
-    context.asAbsolutePath('./node_modules/vscode-oniguruma/release/onig.wasm'),
-    [ { path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof.json'), scopeName: 'source.coq.proof' },
-      { path: context.asAbsolutePath('./src/syntax/syntaxes/coq-proof-body.json'), scopeName: 'source.coq.proof.body'} ]);
+  
+  coqTokenizer = Tokenizer.get();
 
   updateLanguageModels();
 
