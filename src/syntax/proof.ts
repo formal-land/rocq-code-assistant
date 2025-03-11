@@ -3,8 +3,9 @@ import { CoqLSPClient } from '../coq-lsp-client';
 import { Request } from '../coq-lsp-client';
 import { PetState } from '../lib/coq-lsp/types';
 import { Name } from './const';
+import { Token } from '../syntax/tokenizer';
 
-type ProofElement = ProofBlock | string;
+type ProofElement = ProofBlock | Token;
 
 class ProofBlock {
   private state: PetState;
@@ -24,12 +25,11 @@ class ProofBlock {
     return openSubProofs;
   }
 
-  async insert(tokens: { value: string, tags: string[] }[] ) {
+  async insert(tokens: Token[]) {
     if (!this.open) throw Error('Proof completed');
 
     for (const token of tokens) {
-      const nextElement = token.tags.includes(Name.TACTIC) ?
-        new ProofBlock(this.state) : token.value;
+      const nextElement = token.scopes.includes(Name.ADMIT) ? new ProofBlock(this.state) : token;
       this.state = await CoqLSPClient
         .get()
         .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value });
