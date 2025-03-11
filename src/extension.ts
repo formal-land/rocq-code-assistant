@@ -6,7 +6,7 @@ import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import { search } from './search';
-import * as BasicLLM from './oracles/basic-LLM/basic-LLM';
+import { BasicLLM } from './oracles/basic-LLM/basic-LLM';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -76,7 +76,7 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
     return -1; 
   }
 
-  search(proof, [BasicLLM.create(selectedModel)]);
+  search(proof, [new BasicLLM(selectedModel)]);
   return 0;
 }
 
