@@ -30,7 +30,7 @@ export class CoqLSPClient extends LanguageClient {
   private static instance?: CoqLSPClient;
 
   static get() {
-    if (!this.instance) this.instance = new CoqLSPClient;
+    if (!this.instance) this.instance = new CoqLSPClient();
     return this.instance;
   }
   

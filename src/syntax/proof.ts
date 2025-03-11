@@ -36,11 +36,8 @@ class ProofBlock {
       this.elements.push(nextElement);
     }
 
-    const goals = await CoqLSPClient
-      .get()
-      .sendRequest(Request.Petanque.goals, { st: this.state.st });
-    if (goals.goals.length === 0)
-      this.open = false;
+    const goals = await this.goals();
+    if (goals.length === 0) this.open = false;
   }
 
   async goals() {
@@ -68,13 +65,6 @@ export class ProofMeta {
   readonly location: vscode.Range;
   readonly admitsLocations: vscode.Range[];
 
-  static async init(uri: string, keyword: string, name: string, type: string, location: vscode.Range, admitsLocations: vscode.Range[]) {
-    const startingState = await CoqLSPClient
-      .get()
-      .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null });
-    return new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location, admitsLocations);
-  }
-  
   private constructor(uri: string, keyword: string, name: string, type: string, body: ProofBlock, location: vscode.Range, admitsLocations: vscode.Range[]) {
     this.keyword = keyword;
     this.name = name;
@@ -83,6 +73,53 @@ export class ProofMeta {
     this.uri = uri;
     this.location = location;
     this.admitsLocations = admitsLocations;
+  }
+
+  private static async init(uri: string, keyword: string, name: string, type: string, location: vscode.Range, admitsLocations: vscode.Range[], body?: Token[]) {
+    const startingState = await CoqLSPClient
+      .get()
+      .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null });
+    const proofMeta = new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location, admitsLocations);
+    if (body) await proofMeta.body.insert(body);
+    return proofMeta;
+  }
+
+  static fromTokens(uri: string, tokens: Token[]) {
+    tokens = tokens
+      .filter(token => 
+        !token.scopes.includes(Name.COMMENT) && 
+        token.value !== '');
+    
+    const keyword = tokens
+      .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
+      .map(token => token.value)
+      .join(' ');
+    
+    const name = tokens
+      .filter(token => token.scopes.includes(Name.PROOF_NAME))
+      .map(token => token.value)
+      .join(' ');
+    
+    const type = tokens
+      .filter(token => token.scopes.includes(Name.PROOF_TYPE))
+      .map(token => token.value)
+      .join(' ');
+    
+    const body = tokens
+      .filter(token => token.scopes.includes(Name.PROOF_BODY));
+    
+    const location = new vscode.Range(
+      tokens[0].range.start.line, 
+      tokens[0].range.start.character, 
+      tokens[tokens.length - 1].range.end.line, 
+      tokens[tokens.length - 1].range.end.character);
+    
+    const admitsLocations = tokens
+      .filter(token => 
+        token.scopes.includes(Name.TACTIC))
+      .map(token => token.range);
+      
+    return ProofMeta.init(uri, keyword, name, type, location, admitsLocations, body);
   }
 
   async goals() {

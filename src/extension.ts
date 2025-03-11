@@ -8,6 +8,7 @@ import * as extractors from './syntax/extractors';
 import { search } from './search';
 import { BasicLLM } from './oracles/basic-LLM/basic-LLM';
 import { Scope } from './syntax/const';
+import { ProofMeta } from './syntax/proof';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -62,20 +63,23 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
 
   const editor = vscode.window.activeTextEditor;
 
-  if (!coqLSPClient || !coqTokenizer || !editor) return -1;
-  
+  if (!editor) return -1;
+
   const tokenizedText = await coqTokenizer.tokenize(editor.document.getText(), Scope.PROOF);
 
-  const proof = await (proofName ?
-    extractors.extractProofFromName(editor.document.uri.toString(), proofName, tokenizedText) :
-    extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, tokenizedText));
-
-  if (!proof) { 
+  const proofTokens = proofName ?
+    extractors.extractProofTokensFromName(proofName, tokenizedText) :
+    extractors.extractProofTokensAtPosition(editor.selection.active, tokenizedText);
+  
+  if (!proofTokens) { 
     vscode.window.showErrorMessage('Not a theorem'); 
     return -1; 
   }
 
+  const proof = await ProofMeta.fromTokens(editor.document.uri.toString(), proofTokens);
+
   search(proof, [new BasicLLM(selectedModel)]);
+
   return 0;
 }
 
