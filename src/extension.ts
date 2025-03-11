@@ -7,6 +7,7 @@ import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import { search } from './search';
 import { BasicLLM } from './oracles/basic-LLM/basic-LLM';
+import { Scope } from './syntax/const';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -62,14 +63,12 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
   const editor = vscode.window.activeTextEditor;
 
   if (!coqLSPClient || !coqTokenizer || !editor) return -1;
-
-  const text = editor.document.getText();
-  const tokenizedText = await coqTokenizer.tokenize(text, 'source.coq.proof');
-  const splittedText = text.split(/\r?\n|\r|\n/g);
+  
+  const tokenizedText = await coqTokenizer.tokenize(editor.document.getText(), Scope.PROOF);
 
   const proof = await (proofName ?
-    extractors.extractProofFromName(editor.document.uri.toString(), proofName, splittedText, tokenizedText) :
-    extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, splittedText, tokenizedText));
+    extractors.extractProofFromName(editor.document.uri.toString(), proofName, tokenizedText) :
+    extractors.extractProofAtPosition(editor.document.uri.toString(), editor.selection.active, tokenizedText));
 
   if (!proof) { 
     vscode.window.showErrorMessage('Not a theorem'); 

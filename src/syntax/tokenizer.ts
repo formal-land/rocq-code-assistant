@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import path from 'path';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
@@ -6,6 +7,12 @@ import * as oniguruma from 'vscode-oniguruma';
 import { Scope } from './const';
 
 const NEW_LINE_REGEX = /\r?\n|\r|\n/g;
+
+export interface Token {
+  value: string,
+  scopes: string[],
+  range: vscode.Range
+}
 
 export class Tokenizer {
   private static instance: Tokenizer;
@@ -40,26 +47,32 @@ export class Tokenizer {
         if (!grammar) return Promise.reject(`Unknown scope ${scopeName}`);
 
         const data = await fsp.readFile(grammar.path);
-
         return vsctm.parseRawGrammar(data.toString(), grammar.path);
       }
     });
   }
 
-  async tokenize(text: string, scopeName: string): Promise<vsctm.ITokenizeLineResult[]> {
+  async tokenize(text: string, scopeName: Scope) {
     const grammar = await this.registry.loadGrammar(scopeName);
-
-    if (!grammar) return Promise.reject(`Cannot load grammar for scope ${scopeName}`);
+    if (!grammar) throw Error(`Cannot load grammar for scope ${scopeName}`);
 
     const lines = text.split(NEW_LINE_REGEX);
+    const tokens: Token[] = [];
     let ruleStack = vsctm.INITIAL;
-
-    const tokenizedLines = lines.map(line => {
+    for (const [lineIdx, line] of lines.entries()) {
       const tokenizedLine = grammar.tokenizeLine(line, ruleStack);
+      
+      const newTokens = tokenizedLine
+        .tokens
+        .map(token => ({
+          value: line.substring(token.startIndex, token.endIndex).trim(),
+          scopes: token.scopes,
+          range: new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex) }));
+      tokens.push(...newTokens);
+      
       ruleStack = tokenizedLine.ruleStack;
-      return tokenizedLine;
-    });
-    
-    return tokenizedLines;
+    }
+
+    return tokens;
   }
 }
