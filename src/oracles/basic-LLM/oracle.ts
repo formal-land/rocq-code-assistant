@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { renderPrompt } from '@vscode/prompt-tsx';
 import { Goal, PpString } from '../../lib/coq-lsp/types';
 import { Prompt } from './prompt';
-import * as utils from '../../utils';
 import { Oracle } from '../types';
 
 export class BasicLLM implements Oracle {
@@ -16,7 +15,7 @@ export class BasicLLM implements Oracle {
     const prompt = await renderPrompt(
       Prompt, { goal }, { modelMaxPromptTokens: this.model.maxInputTokens }, this.model);
 
-    console.log(utils.languageModelChatMessagesToString(prompt.messages));
+    // console.log(utils.languageModelChatMessagesToString(prompt.messages));
 
     const rawResponse = await this.model.sendRequest(
       prompt.messages, {}, new vscode.CancellationTokenSource().token);
@@ -34,4 +33,3 @@ export class BasicLLM implements Oracle {
     return parsedResponse.groups['coqCode'];
   }
 }
-
