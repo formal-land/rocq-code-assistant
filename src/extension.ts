@@ -6,9 +6,10 @@ import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import { search } from './search';
-import { BasicLLM } from './oracles/basic-LLM/basic-LLM';
+import { BasicLLM } from './oracles/basic-LLM/oracle';
 import { Scope } from './syntax/scope';
 import { ProofMeta } from './proof';
+import { Prettier } from './syntax/prettier/prettier';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -78,7 +79,7 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
 
   const proof = await ProofMeta.fromTokens(editor.document.uri.toString(), proofTokens);
 
-  search(proof, [new BasicLLM(selectedModel)]);
+  search(proof, [new BasicLLM(selectedModel)], new Prettier(selectedModel));
 
   return 0;
 }
