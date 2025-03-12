@@ -12,7 +12,7 @@ export function extractProofTokensFromName(proofName: string, tokens: Token[]) {
   else return extractProofTokensAroundToken(nameToken, tokens);
 }
 
-export function extractProofTokensAtPosition(position: vscode.Position, tokens: Token[]) {
+export function extractProofTokensFromPosition(position: vscode.Position, tokens: Token[]) {
   const selectionToken = tokens.find(token =>
     token.range.contains(position) &&
     token.scopes.includes(Name.PROOF));

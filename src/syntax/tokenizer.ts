@@ -65,7 +65,7 @@ export class Tokenizer {
       const newTokens = tokenizedLine
         .tokens
         .map(token => ({
-          value: line.substring(token.startIndex, token.endIndex).trim(),
+          value: line.substring(token.startIndex, token.endIndex),
           scopes: token.scopes,
           range: new vscode.Range(lineIdx, token.startIndex, lineIdx, token.endIndex) }));
       tokens.push(...newTokens);

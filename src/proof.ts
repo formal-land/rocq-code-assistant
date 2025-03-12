@@ -26,12 +26,20 @@ class ProofBlock {
   async insert(tokens: Token[], execute: boolean = true) {
     if (!this.open) throw Error('Proof completed');
 
+    const baseLineIdx = tokens[0].range.start.line;
+
     for (const token of tokens) {
-      const nextElement = token.scopes.includes(Name.ADMIT) ? new ProofBlock(this.state) : token;
-      if (execute && token.scopes.includes(Name.EXECUTABLE))
+      if (execute && token.scopes.includes(Name.EXECUTABLE)) {
         this.state = await CoqLSPClient
           .get()
-          .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value });
+          .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value.trim() });
+      }
+
+      let nextElement;
+      if (token.scopes.includes(Name.ADMIT))
+        nextElement = new ProofBlock(this.state);
+      else
+        nextElement = { ...token, range: new vscode.Range(token.range.start.translate(-baseLineIdx), token.range.end.translate(-baseLineIdx))};
       this.elements.push(nextElement);
     }
 
@@ -53,6 +61,12 @@ class ProofBlock {
       element instanceof ProofBlock ? element.deepcopy() : element);
     return copy;
   }
+
+  toString(): string {
+    return this.elements
+      .reduce((str, element) => 
+        str.concat(element instanceof ProofBlock ? element.toString() : element.value), '');
+  }
 }
 
 export class ProofMeta {
@@ -61,24 +75,22 @@ export class ProofMeta {
   readonly name: string;
   readonly type: string;
   readonly body: ProofBlock;
-  readonly location: vscode.Range;
-  readonly admitsLocations: vscode.Range[];
+  readonly editorLocation: vscode.Range;
 
-  private constructor(uri: string, keyword: string, name: string, type: string, body: ProofBlock, location: vscode.Range, admitsLocations: vscode.Range[]) {
+  private constructor(uri: string, keyword: string, name: string, type: string, body: ProofBlock, editorLocation: vscode.Range) {
     this.keyword = keyword;
     this.name = name;
     this.type = type;
     this.body = body;
     this.uri = uri;
-    this.location = location;
-    this.admitsLocations = admitsLocations;
+    this.editorLocation = editorLocation;
   }
 
-  private static async init(uri: string, keyword: string, name: string, type: string, location: vscode.Range, admitsLocations: vscode.Range[], body?: Token[]) {
+  private static async init(uri: string, keyword: string, name: string, type: string, location: vscode.Range,  body?: Token[]) {
     const startingState = await CoqLSPClient
       .get()
       .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null });
-    const proofMeta = new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location, admitsLocations);
+    const proofMeta = new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location);
     if (body) await proofMeta.insert(body);
     return proofMeta;
   }
@@ -99,7 +111,7 @@ export class ProofMeta {
       .map(token => token.value)
       .join(' ');
     
-    const body = tokens
+    const bodyTokens = tokens
       .filter(token => token.scopes.includes(Name.PROOF_BODY));
     
     const location = new vscode.Range(
@@ -107,13 +119,8 @@ export class ProofMeta {
       tokens[0].range.start.character, 
       tokens[tokens.length - 1].range.end.line, 
       tokens[tokens.length - 1].range.end.character);
-    
-    const admitsLocations = tokens
-      .filter(token => 
-        token.scopes.includes(Name.ADMIT))
-      .map(token => token.range);
       
-    return ProofMeta.init(uri, keyword, name, type, location, admitsLocations, body);
+    return ProofMeta.init(uri, keyword, name, type, location, bodyTokens);
   }
 
   async insert(tokens: Token[], at: number = 0, execute: boolean = true) {
@@ -131,6 +138,6 @@ export class ProofMeta {
   }
 
   deepcopy() {
-    return new ProofMeta(this.uri, this.keyword, this.name, this.type, this.body.deepcopy(), this.location, this.admitsLocations);
+    return new ProofMeta(this.uri, this.keyword, this.name, this.type, this.body.deepcopy(), this.editorLocation);
   }
 }

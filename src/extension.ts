@@ -69,7 +69,7 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
 
   const proofTokens = proofName ?
     extractors.extractProofTokensFromName(proofName, tokenizedText) :
-    extractors.extractProofTokensAtPosition(editor.selection.active, tokenizedText);
+    extractors.extractProofTokensFromPosition(editor.selection.active, tokenizedText);
   
   if (!proofTokens) { 
     vscode.window.showErrorMessage('Not a theorem'); 
