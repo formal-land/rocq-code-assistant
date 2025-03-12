@@ -29,17 +29,18 @@ class ProofBlock {
     const baseLineIdx = tokens[0].range.start.line;
 
     for (const token of tokens) {
-      if (execute && token.scopes.includes(Name.EXECUTABLE)) {
-        this.state = await CoqLSPClient
-          .get()
-          .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value.trim() });
-      }
-
       let nextElement;
       if (token.scopes.includes(Name.ADMIT))
         nextElement = new ProofBlock(this.state);
       else
         nextElement = { ...token, range: new vscode.Range(token.range.start.translate(-baseLineIdx), token.range.end.translate(-baseLineIdx))};
+    
+      if (execute && token.scopes.includes(Name.EXECUTABLE)) {
+        this.state = await CoqLSPClient
+          .get()
+          .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value.trim() });
+      }
+      
       this.elements.push(nextElement);
     }
 
@@ -139,5 +140,9 @@ export class ProofMeta {
 
   deepcopy() {
     return new ProofMeta(this.uri, this.keyword, this.name, this.type, this.body.deepcopy(), this.editorLocation);
+  }
+
+  toString() {
+    return `${this.keyword} ${this.name}: ${this.type}. Proof. ${this.body.toString()} Qed.`;
   }
 }
