@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Name } from './const';
+import { Name } from './scope';
 import { Token } from './tokenizer';
 
 export function extractProofTokensFromName(proofName: string, tokens: Token[]) {

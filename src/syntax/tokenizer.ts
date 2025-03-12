@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
-import { Scope } from './const';
+import { Scope } from './scope';
 
 const NEW_LINE_REGEX = /\r?\n|\r|\n/g;
 

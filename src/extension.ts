@@ -7,8 +7,8 @@ import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import { search } from './search';
 import { BasicLLM } from './oracles/basic-LLM/basic-LLM';
-import { Scope } from './syntax/const';
-import { ProofMeta } from './syntax/proof';
+import { Scope } from './syntax/scope';
+import { ProofMeta } from './proof';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';

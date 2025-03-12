@@ -1,16 +1,14 @@
 import * as vscode from 'vscode';
-import { CoqLSPClient } from '../coq-lsp-client';
-import { Request } from '../coq-lsp-client';
-import { PetState } from '../lib/coq-lsp/types';
-import { Name } from './const';
-import { Token } from '../syntax/tokenizer';
-
-type ProofElement = ProofBlock | Token;
+import { CoqLSPClient } from './coq-lsp-client';
+import { Request } from './coq-lsp-client';
+import { PetState } from './lib/coq-lsp/types';
+import { Name } from './syntax/scope';
+import { Token } from './syntax/tokenizer';
 
 class ProofBlock {
   private state: PetState;
   private open: boolean = true;
-  private elements: ProofElement[] = [];
+  private elements: (ProofBlock | Token)[] = [];
 
   constructor(state: PetState) {
     this.state = state;
@@ -25,14 +23,15 @@ class ProofBlock {
     return openSubProofs;
   }
 
-  async insert(tokens: Token[]) {
+  async insert(tokens: Token[], execute: boolean = true) {
     if (!this.open) throw Error('Proof completed');
 
     for (const token of tokens) {
       const nextElement = token.scopes.includes(Name.ADMIT) ? new ProofBlock(this.state) : token;
-      this.state = await CoqLSPClient
-        .get()
-        .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value });
+      if (execute && token.scopes.includes(Name.EXECUTABLE))
+        this.state = await CoqLSPClient
+          .get()
+          .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value });
       this.elements.push(nextElement);
     }
 
@@ -80,16 +79,11 @@ export class ProofMeta {
       .get()
       .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null });
     const proofMeta = new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location, admitsLocations);
-    if (body) await proofMeta.body.insert(body);
+    if (body) await proofMeta.insert(body);
     return proofMeta;
   }
 
-  static fromTokens(uri: string, tokens: Token[]) {
-    tokens = tokens
-      .filter(token => 
-        !token.scopes.includes(Name.COMMENT) && 
-        token.value !== '');
-    
+  static fromTokens(uri: string, tokens: Token[]) {  
     const keyword = tokens
       .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
       .map(token => token.value)
@@ -116,10 +110,17 @@ export class ProofMeta {
     
     const admitsLocations = tokens
       .filter(token => 
-        token.scopes.includes(Name.TACTIC))
+        token.scopes.includes(Name.ADMIT))
       .map(token => token.range);
       
     return ProofMeta.init(uri, keyword, name, type, location, admitsLocations, body);
+  }
+
+  async insert(tokens: Token[], at: number = 0, execute: boolean = true) {
+    const openSubProofs = this.body.openSubProofs();
+    if (openSubProofs.length > at)
+      await openSubProofs[at].insert(tokens, execute);
+    else throw Error('Index too large');
   }
 
   async goals() {

@@ -10,7 +10,7 @@
     "tactic": {
       "begin": "(?=[a-zA-Z]|_|\\p{L})",
       "end": "(?<=\\.)(?!\\S)",
-      "name": "meta.proof.body.tactic.coq",
+      "name": "meta.proof.body.tactic.coq meta.proof.body.executable",
       "patterns": [
         { "include": "#admits" }
       ]
@@ -22,7 +22,7 @@
     },
     "focusing_construct": {
       "match": "(?<!\\w)([-\\+\\*\\{\\}])(?!\\w)",
-      "name": "meta.proof.body.focus.coq"
+      "name": "meta.proof.body.focus.coq meta.proof.body.executable"
     },
     "block_comment": {
       "applyEndPatternLast": 1,
