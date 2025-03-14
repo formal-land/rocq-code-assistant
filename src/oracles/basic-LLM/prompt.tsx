@@ -1,13 +1,5 @@
-import {
-	PromptElement,
-	BasePromptElementProps,
-	UserMessage,
-	AssistantMessage,
-} from '@vscode/prompt-tsx';
-import { 
-  Goal, 
-  PpString 
-} from '../../lib/coq-lsp/types';
+import { PromptElement, BasePromptElementProps, UserMessage, AssistantMessage } from '@vscode/prompt-tsx';
+import { Goal, PpString } from '../../lib/coq-lsp/types';
 
 interface PromptProps extends BasePromptElementProps {
 	goal: Goal<PpString>
@@ -45,11 +37,12 @@ class GoalMessage extends PromptElement<GoalMessagePrompt> {
 				<>
 					You can use the following hypotesis: <br /> <br />
 					{ 
-						this.props.goal.hyps.flatMap(block => block.names.map(name => 
-							<> 
-								- {block.ty}: {name} <br /> 
-							</>
-						))
+						this.props.goal.hyps.flatMap(block => 
+							block.names.map(name => 
+								<> 
+									- {block.ty}: {name} <br /> 
+								</>
+							))
 					}
 				</>
 		}
