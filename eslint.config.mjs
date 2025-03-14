@@ -11,17 +11,19 @@ export default [{
 
   languageOptions: {
     parser: tsParser,
-    ecmaVersion: 2022,
+    ecmaVersion: 2023,
     sourceType: 'module',
   },
 
   rules: {
     '@typescript-eslint/naming-convention': ['warn', {
-      selector: ['import', 'variableLike'],
+      selector: 'import',
       format: ['camelCase', 'PascalCase']
+    }, {
+      selector: 'variableLike',
+      format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+      leadingUnderscore: 'allow'
     }],
-
-    curly: ['warn', 'multi', 'consistent'],
     eqeqeq: 'warn',
     'no-throw-literal': 'warn',
     semi: 'warn',

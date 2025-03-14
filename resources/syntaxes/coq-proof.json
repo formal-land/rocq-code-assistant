@@ -1,0 +1,72 @@
+{
+  "fileTypes": ["v"],
+  "name": "Coq proofs",
+  "patterns": [
+    { "include": "#block_comment" },
+    { "include": "#proof" }
+  ],
+  "repository": {
+    "proof": {
+      "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b)",
+      "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "comment": "Defines a proof block",
+      "name": "meta.proof.coq",
+      "patterns": [
+        { "include": "#proof_head" },
+        { "include": "#proof_body" }
+      ]
+    },
+    "proof_head" : {
+      "begin": "(?=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b)",
+      "end": "(?=\\b(Proof(\\s+(Mode|using|with))?)\\.)",
+      "name": "meta.proof.head.coq",
+      "patterns": [
+        { "include": "#proof_token" },
+        { "include": "#proof_name" },
+        { "include": "#proof_bind" },
+        { "include": "#proof_type" },
+        { "include": "#block_comment" }
+      ]
+    },
+    "proof_body": {
+      "begin": "(?<=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
+      "end": "(?=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "name": "meta.proof.body.coq",
+      "patterns": [
+        { "include": "source.coq.proof.body" }
+      ]
+    },
+    "proof_token" : {
+      "match": "\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b",
+      "name": "meta.proof.head.keyword.coq"
+    },
+    "proof_name": {
+      "begin": "(?<=\\b(Theorem|Lemma|Remark|Fact|Corollary|Property|Proposition)\\b\\s+)",
+      "end": "(?=(\\b|\\:)\\s+)",
+      "name": "meta.proof.head.name.coq"
+    },
+    "proof_bind": {
+      "begin": "(?<=\\(|\\{)",
+      "end": "(?=\\)|\\})",
+      "name": "meta.proof.head.bind.coq"
+    },
+    "proof_type": {
+      "begin": "(?<=\\:\\s*)",
+      "end": "(?=\\s*\\.(?!\\S))",
+      "name": "meta.proof.head.type.coq"
+    },
+    "block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.coq",
+      "patterns": [
+        {
+          "include": "#block_comment"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.coq.proof",
+  "uuid": "7d81e50b-454d-47ed-b365-d0d57440f6e9"
+}

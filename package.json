@@ -1,7 +1,4 @@
 {
-  "enabledApiProposals": [
-    "chatProvider"
-  ],
   "name": "rocq-coding-assistant",
   "publisher": "formal-land",
   "displayName": "Rocq coding assistant",
@@ -13,19 +10,33 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:coq"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "rocq-coding-assistant.helloWorld",
+        "command": "rocq-coding-assistant.hello-world",
         "title": "Hello World"
       },
       {
-        "command": "rocq-coding-assistant.tryOllama",
-        "title": "Try Ollama"
+        "command": "rocq-coding-assistant.solve",
+        "title": "Solve with rocq-coding-assistant"
+      },
+      {
+        "command": "rocq-coding-assistant.select-model",
+        "title": "Select the model"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "rocq-coding-assistant.solve",
+          "when": "editorLangId == coq"
+        }
+      ]
+    },
     "configuration": [
       {
         "title": "Rocq coding assistant",
@@ -33,34 +44,69 @@
           "rocq-coding-assistant.coq-lsp-path": {
             "type": "string",
             "default": "coq-lsp",
-            "description": "Path to the coq-lsp binary, by default, search in PATH"
+            "description": "Path to the coq-lsp binary, by default, search in PATH."
           }
         }
       },
       {
         "title": "Ollama",
         "properties": {
-          "rocq-coding-assistant.ollama-enabled": {
+          "rocq-coding-assistant.provider.ollama.enabled": {
             "type": "boolean",
-            "default": true,
-            "description": "Enable Ollama connection"
+            "default": false,
+            "description": "Enable Ollama connection."
           },
-          "rocq-coding-assistant.ollama-host-address": {
+          "rocq-coding-assistant.provider.ollama.host.address": {
             "type": "string",
             "default": "127.0.0.1",
-            "description": "The Ollama host address"
+            "description": "The Ollama host address."
           },
-          "rocq-coding-assistant.ollama-host-port": {
+          "rocq-coding-assistant.provider.ollama.host.port": {
             "type": "string",
             "default": "11434",
-            "description": "The Ollama host port"
+            "description": "The Ollama host port."
+          },
+          "rocq-coding-assistant.provider.ollama.model.name": {
+            "type": "string",
+            "default": "",
+            "description": "Name of the model form Ollama to use."
           }
         }
-      }
-    ],
-    "languageModels": [
+      },
       {
-        "vendor": "ollama"
+        "title": "OpenAI",
+        "properties": {
+          "rocq-coding-assistant.provider.openai.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable OpenAI models",
+            "order": 0
+          },
+          "rocq-coding-assistant.provider.openai.api-key-var-name": {
+            "type": "string",
+            "default": "OPENAI_API_KEY",
+            "description": "Name of the environment variable set with the OpenAI API key.",
+            "order": 1
+          },
+          "rocq-coding-assistant.provider.openai.model.name": {
+            "type": "string",
+            "default": "o1-mini",
+            "description": "Name of the model from OpenAI to use.",
+            "order": 0
+          },
+          "rocq-coding-assistant.provider.openai.model.context-window": {
+            "type": "number",
+            "default": 200000,
+            "markdownDescription": "Context window size for the selected model. Go to [OpenAI developer platform](https://platform.openai.com/docs/models) for a complete descritpion of the models.",
+            "order": 1
+          },
+          "rocq-coding-assistant.provider.openai.model.max-output-tokens": {
+            "type": "number",
+            "default": 100000,
+            "markdownDescription": "Maximum number of output tokens for the selected model. Go to [OpenAI developer platform](https://platform.openai.com/docs/models) for a complete descritpion of the models.",
+            "order": 2
+          }
+        }
       }
     ]
   },
@@ -82,10 +128,14 @@
     "@vscode/test-electron": "^2.4.1",
     "eslint": "^9.16.0",
     "typescript": "^5.7.2",
-    "vscode-tmgrammar-test": "^0.1.3"
+    "vscode-tmgrammar-test": "^0.1.3",
+    "yaml": "^2.7.0"
   },
   "dependencies": {
+    "@vscode/prompt-tsx": "^0.3.0-alpha.18",
     "ollama": "^0.5.12",
+    "openai": "^4.85.1",
+    "tiktoken": "^1.0.20",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-types": "^3.17.5",
     "vscode-oniguruma": "^2.0.1",
