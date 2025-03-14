@@ -11,14 +11,14 @@ export class BasicLLM implements Oracle {
     this.model = model;
   }
 
-  async query(goal: Goal<PpString>) {
+  async query(goal: Goal<PpString>, cancellationToken?: vscode.CancellationToken) {
     const prompt = await renderPrompt(
       Prompt, { goal }, { modelMaxPromptTokens: this.model.maxInputTokens }, this.model);
 
     // console.log(utils.languageModelChatMessagesToString(prompt.messages));
 
     const rawResponse = await this.model.sendRequest(
-      prompt.messages, {}, new vscode.CancellationTokenSource().token);
+      prompt.messages, {}, cancellationToken);
     
     const fragments: string[] = [];
     for await (const fragment of rawResponse.text)

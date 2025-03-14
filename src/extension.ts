@@ -1,15 +1,14 @@
 import * as vscode from 'vscode';
 import * as utils from './utils';
-import { Tokenizer } from './syntax/tokenizer';
-import { CoqLSPClient } from './coq-lsp-client';
 import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
-import { search } from './search';
-import { BasicLLM } from './oracles/basic-LLM/oracle';
+import * as Prettier from './syntax/prettier/prettier';
+import { Tokenizer } from './syntax/tokenizer';
+import { CoqLSPClient } from './coq-lsp-client';
 import { Scope } from './syntax/scope';
 import { ProofMeta } from './proof';
-import { Prettier } from './syntax/prettier/prettier';
+import { BasicLLM } from './oracles/basic-LLM/oracle';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -39,7 +38,16 @@ export async function activate(context: vscode.ExtensionContext) {
   const regSelectModel = vscode.commands.registerCommand(Commands.SELECT_MODEL, selectModelCallback);
   context.subscriptions.push(regSelectModel);
 
-  const regSolve = vscode.commands.registerTextEditorCommand(Commands.SOLVE, solveCallback);
+  const regSolve = vscode.commands.registerTextEditorCommand(Commands.SOLVE,
+    async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: any, proofName?: string) => {
+      while (!selectedModel) 
+        await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
+
+      return vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
+        (progress, cancellationToken) => solveCallback(textEditor, edit, resource, proofName, cancellationToken)
+      );
+    }
+  );
   context.subscriptions.push(regSolve);
 }
 
@@ -58,30 +66,28 @@ async function helloWorldCallback() {
   return 0;
 }
 
-async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextEditorEdit, resource?: any, proofName?: string) {
-  while (!selectedModel) 
-    await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
+async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: vscode.Uri, proofName?: string, cancellationToken?: vscode.CancellationToken) {
+  if (!textEditor) {
+    vscode.window.showErrorMessage('No active text editor available.');
+    throw new Error('No active text editor available.');
+  }
 
-  const editor = vscode.window.activeTextEditor;
-
-  if (!editor) return -1;
-
-  const tokenizedText = await coqTokenizer.tokenize(editor.document.getText(), Scope.PROOF);
+  const tokenizedText = await coqTokenizer.tokenize(textEditor.document.getText(), Scope.PROOF);
 
   const proofTokens = proofName ?
     extractors.extractProofTokensFromName(proofName, tokenizedText) :
-    extractors.extractProofTokensFromPosition(editor.selection.active, tokenizedText);
-  
-  if (!proofTokens) { 
-    vscode.window.showErrorMessage('Not a theorem'); 
-    return -1; 
+    extractors.extractProofTokensFromPosition(textEditor.selection.active, tokenizedText);
+
+  if (!proofTokens) {
+    vscode.window.showErrorMessage('Theorem not found.');
+    throw new Error('Theorem not found.');
   }
 
-  const proof = await ProofMeta.fromTokens(editor.document.uri.toString(), proofTokens);
-
-  search(proof, [new BasicLLM(selectedModel)], new Prettier(selectedModel));
-
-  return 0;
+  const proof = await ProofMeta
+    .fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken)
+    .then(proof => proof.fill([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken));
+  const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString(), cancellationToken);
+  edit.replace(proof.editorLocation, ppProof);
 }
 
 async function selectModelCallback(modelId?: string) {
