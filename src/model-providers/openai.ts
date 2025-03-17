@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
-import * as tokenizer from 'tiktoken';
+import * as tiktoken from 'tiktoken';
 import OpenAI from 'openai';
 import { ChatCompletionAssistantMessageParam, ChatCompletionUserMessageParam, ChatCompletionContentPartText } from 'openai/resources/index.mjs';
 import { ModelProviderMetadata } from './types';
+import { ITokenizer } from '@vscode/prompt-tsx';
+import { AnyTokenizer } from '@vscode/prompt-tsx/dist/base/tokenizer/tokenizer';
 
 export function create(model: string, metadata: ModelProviderMetadata, apiKeyVarName: string): vscode.LanguageModelChat {
   const client = new OpenAI({ apiKey: process.env[apiKeyVarName] });
@@ -10,7 +12,7 @@ export function create(model: string, metadata: ModelProviderMetadata, apiKeyVar
   async function sendRequest(messages: vscode.LanguageModelChatMessage[], options?: vscode.LanguageModelChatRequestOptions, token?: vscode.CancellationToken) {
     const stream = await client.chat.completions.create({
       model: model,
-      messages: messages.map(_vscodeToOpenAIMessage),
+      messages: messages.map(vscodeToOpenAIMessage),
       stream: true,
     });
 
@@ -26,28 +28,38 @@ export function create(model: string, metadata: ModelProviderMetadata, apiKeyVar
 
     return { stream: responseStreamGenerator(), text: responseTextGenerator() };
   }
-  
-  const encoder = tokenizer.encoding_for_model(<tokenizer.TiktokenModel>model);
 
-  async function countTokens(text: string | vscode.LanguageModelChatMessage, token: vscode.CancellationToken) {
-    let fullText;
-    
-    if (typeof text === 'string')
-      fullText = text;
-    else
-      fullText = text.content
-        .map(part => {
-          if (part instanceof vscode.LanguageModelTextPart) return part.value;
-          else throw Error('Message type not supported'); })
-        .join('');
-
-    return encoder.encode(fullText).length;
-  }
-
-  return { ...metadata, sendRequest, countTokens };
+  return { 
+    ...metadata, 
+    sendRequest, 
+    countTokens: (text: string | vscode.LanguageModelChatMessage, token?: vscode.CancellationToken) => countTokens(model, text, token)
+  };
 }
 
-function _vscodeToOpenAIRole(role: vscode.LanguageModelChatMessageRole) {
+export function tokenizer(model: string): ITokenizer {
+  return new AnyTokenizer(
+    (text: string | vscode.LanguageModelChatMessage, token?: vscode.CancellationToken) => countTokens(model, text, token), 
+    'vscode'
+  );
+}
+
+async function countTokens(model: string, text: string | vscode.LanguageModelChatMessage, token?: vscode.CancellationToken) {
+  const encoder = tiktoken.encoding_for_model(<tiktoken.TiktokenModel>model);
+  
+  let fullText;
+  if (typeof text === 'string')
+    fullText = text;
+  else
+    fullText = text.content
+      .map(part => {
+        if (part instanceof vscode.LanguageModelTextPart) return part.value;
+        else throw Error('Message type not supported'); })
+      .join('');
+
+  return encoder.encode(fullText).length;
+}
+
+function vscodeToOpenAIRole(role: vscode.LanguageModelChatMessageRole) {
   switch (role) {
     case 1: return 'user';
     case 2: return 'assistant';
@@ -55,16 +67,16 @@ function _vscodeToOpenAIRole(role: vscode.LanguageModelChatMessageRole) {
   }
 }
 
-function _vscodeToOpenAIContent(content: vscode.LanguageModelTextPart | vscode.LanguageModelToolResultPart | vscode.LanguageModelToolCallPart): ChatCompletionContentPartText {
+function vscodeToOpenAIContent(content: vscode.LanguageModelTextPart | vscode.LanguageModelToolResultPart | vscode.LanguageModelToolCallPart): ChatCompletionContentPartText {
   if (content instanceof vscode.LanguageModelTextPart)
     return { text: content.value, type: 'text'};
   else throw Error('Message type not supported');
 }
 
-function _vscodeToOpenAIMessage(message: vscode.LanguageModelChatMessage): ChatCompletionUserMessageParam | ChatCompletionAssistantMessageParam {
+function vscodeToOpenAIMessage(message: vscode.LanguageModelChatMessage): ChatCompletionUserMessageParam | ChatCompletionAssistantMessageParam {
   return {
-    role: _vscodeToOpenAIRole(message.role),
-    content: message.content.map(_vscodeToOpenAIContent), 
+    role: vscodeToOpenAIRole(message.role),
+    content: message.content.map(vscodeToOpenAIContent), 
     name: message.name
   };
 }
