@@ -60,6 +60,6 @@ export function languageModelChatMessagesToString(messages: vscode.LanguageModel
         else 
           throw Error('Message type not supported');
       }))
-    .map((message, idx) => `(${idx})> ${message}`)
-    .join('\n');
+    .map((message, idx) => `=== Message ${idx} ===\n${message}`)
+    .join('\n\n');
 }

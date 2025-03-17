@@ -1,16 +1,11 @@
-import {
-	PromptElement,
-	BasePromptElementProps,
-	UserMessage,
-	AssistantMessage,
-} from '@vscode/prompt-tsx';
-import { 
-  Goal, 
-  PpString 
-} from '../../lib/coq-lsp/types';
+import { PromptElement, BasePromptElementProps, UserMessage, AssistantMessage } from '@vscode/prompt-tsx';
+import { Goal, PpString } from '../../lib/coq-lsp/types';
+import { OracleParams } from '../types';
+import { Token } from '../../syntax/tokenizer';
 
 interface PromptProps extends BasePromptElementProps {
 	goal: Goal<PpString>
+	params?: OracleParams
 }
 
 export class Prompt extends PromptElement<PromptProps> {
@@ -26,9 +21,43 @@ export class Prompt extends PromptElement<PromptProps> {
 					code block that begins with ```coq and ends with ```.
 					<br />
 				</AssistantMessage>
-				<GoalMessage goal={this.props.goal} />
+				<GoalMessage goal={this.props.goal} priority={100} />
+				{ this.props.params?.errorHistory && this.props.params.errorHistory.length > 0 ? 
+				  <ErroryHistoryMessage errorHistory={this.props.params.errorHistory} /> : <></> }
 			</>
 		);
+	}
+}
+
+interface ErrorHistoryMessagePrompt extends BasePromptElementProps {
+	errorHistory: { tactics: Token[], message?: string }[];
+}
+
+class ErroryHistoryMessage extends PromptElement<ErrorHistoryMessagePrompt> {
+	render() {
+		return(
+			<>
+				<AssistantMessage priority={90}>
+					These solutions have already been tried and they do not work. Please, avoid them. For each of them, a description
+					of the corresponding error is provided. <br/>
+					{
+						this.props.errorHistory.map((error, idx) => 
+							<>
+								* Solution { idx }: <br/>
+								{'\t'} - tactics: { error.tactics.map(tactic => tactic.value).join(' ') } <br/>
+								{ 
+									error.message ? 
+									<> 
+										{'\t'} - error: { error.message.trim().replaceAll('\n', ', ') } <br/> 
+									</> : 
+									<></> 
+								}
+							</>
+						)
+					}
+				</AssistantMessage>
+			</>
+		)
 	}
 }
 
@@ -43,11 +72,11 @@ class GoalMessage extends PromptElement<GoalMessagePrompt> {
 		if (this.props.goal.hyps.length > 0) {
 			hypotesis =
 				<>
-					You can use the following hypotesis: <br /> <br />
+					You can use the following hypotesis: <br/>
 					{ 
 						this.props.goal.hyps.flatMap(block => block.names.map(name => 
 							<> 
-								- {block.ty}: {name} <br /> 
+								* {block.ty}: {name} <br/> 
 							</>
 						))
 					}
@@ -56,8 +85,8 @@ class GoalMessage extends PromptElement<GoalMessagePrompt> {
 		
 		return (
       <UserMessage>
-        The goal you have to prove is: <br /> <br />
-        {this.props.goal.ty} <br /> <br />
+        The goal you have to prove is: <br/> <br/>
+        {this.props.goal.ty} <br/> <br/>
         {hypotesis}
       </UserMessage>
 		);

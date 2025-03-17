@@ -3,14 +3,18 @@ import { CoqLSPClient } from './coq-lsp-client';
 import { Request } from './coq-lsp-client';
 import { PetState } from './lib/coq-lsp/types';
 import { Token } from './syntax/tokenizer';
-import { Oracle } from './oracles/types';
+import { Oracle, OracleParams } from './oracles/types';
 import { Tokenizer } from './syntax/tokenizer';
 import { Scope, Name } from './syntax/scope';
+
+interface InsertResult { status: boolean, message?: string };
+
+type Element = ProofBlock | Token;
 
 class ProofBlock {
   private state: PetState;
   private open: boolean = true;
-  private elements: (ProofBlock | Token)[] = [];
+  private elements: Element[] = [];
 
   constructor(state: PetState) {
     this.state = state;
@@ -25,29 +29,43 @@ class ProofBlock {
     return openSubProofs;
   }
 
-  async insert(tokens: Token[], execute: boolean = true, cancellationToken?: vscode.CancellationToken) {
+  // "forall (X : Type) (test : X -> bool) (l : list X),\nforallb test l = true <-> All (fun x : X => test x = true) l"
+  async insert(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
     if (!this.open) throw Error('Proof completed');
 
     const baseLineIdx = tokens[0].range.start.line;
 
-    for (const token of tokens) {
-      let nextElement;
-      if (token.scopes.includes(Name.ADMIT))
-        nextElement = new ProofBlock(this.state);
-      else
-        nextElement = { ...token, range: new vscode.Range(token.range.start.translate(-baseLineIdx), token.range.end.translate(-baseLineIdx))};
+    const newElements: Element[] = [];
+    let interState: PetState = this.state;
     
-      if (execute && token.scopes.includes(Name.EXECUTABLE)) {
-        this.state = await CoqLSPClient
-          .get()
-          .sendRequest(Request.Petanque.run, { st: this.state.st, tac: token.value.trim() }, cancellationToken);
+    for (const token of tokens) {
+      const debugGoal = await CoqLSPClient
+        .get()
+        .sendRequest(Request.Petanque.goals, { st: interState.st }, cancellationToken);
+
+      if (token.scopes.includes(Name.ADMIT))
+        newElements.push(new ProofBlock(interState));
+      else
+        newElements.push({ ...token, range: new vscode.Range(token.range.start.translate(-baseLineIdx), token.range.end.translate(-baseLineIdx)) });
+    
+      if (token.scopes.includes(Name.EXECUTABLE)) {
+        try {
+          interState = await CoqLSPClient
+            .get()
+            .sendRequest(Request.Petanque.run, { st: interState.st, tac: token.value.trim() }, cancellationToken);
+        } catch (error) {
+          return { status: false, message: (error as Error).message };
+        }
       }
-      
-      this.elements.push(nextElement);
     }
+
+    this.elements.push(...newElements);
+    this.state = interState;
 
     const goals = await this.goals(cancellationToken);
     if (goals.length === 0) this.open = false;
+
+    return { status: true };
   }
 
   async goals(cancellationToken?: vscode.CancellationToken) {
@@ -126,10 +144,10 @@ export class ProofMeta {
     return ProofMeta.init(uri, keyword, name, type, location, bodyTokens, cancellationToken);
   }
 
-  async insert(tokens: Token[], cancellationToken?: vscode.CancellationToken, at: number = 0, execute: boolean = true) {
+  async insert(tokens: Token[], cancellationToken?: vscode.CancellationToken, at: number = 0) {
     const openSubProofs = this.body.openSubProofs();
     if (openSubProofs.length > at)
-      await openSubProofs[at].insert(tokens, execute, cancellationToken);
+      return await openSubProofs[at].insert(tokens, cancellationToken);
     else throw Error('Index too large');
   }
 
@@ -142,14 +160,38 @@ export class ProofMeta {
 
   async fill(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
     const goals = await this.goals();
+    const oracle = oracles[0];
+    const params: OracleParams = {
+      errorHistory: []
+    };
 
+    for (const [idx, goal] of goals.entries()) {
+      let res: InsertResult = { status: false };
+
+      while (res.status === false) {
+        const answer = await oracle.query(goal, params, cancellationToken);
+        const tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
+        const res = await this.insert(tactics, cancellationToken, idx);
+        if (!res.status)
+          params.errorHistory?.push({ tactics: tactics, message: res.message });
+      }
+    }
+    
+    /*
     await Promise.all(
       goals.map(async (goal, idx) => {
-        const answer = await oracles[0].query(goal, cancellationToken);
-        const tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-        return this.insert(tactics, cancellationToken, idx, false);
+        let res: InsertResult = { status: false };
+
+        while (!res.status) {
+          const answer = await oracle.query(goal, undefined, cancellationToken);
+          const tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
+          const res = await this.insert(tactics, cancellationToken, idx);
+          if (!res.status)
+            params.errorHistory?.push({ tactics: tactics, message: res.message });
+        }
       })
-    );
+    ); 
+    */
 
     return this;
   }
