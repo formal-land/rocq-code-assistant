@@ -83,11 +83,10 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
     throw new Error('Theorem not found.');
   }
 
-  const proof = await ProofMeta
-    .fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken)
-    .then(proof => proof.fill([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken));
+  const proof = await ProofMeta.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
+  proof.fill([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
   const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString(), cancellationToken);
-  edit.replace(proof.editorLocation, ppProof);
+  textEditor.edit(edit => edit.replace(proof.editorLocation, ppProof));
 }
 
 async function selectModelCallback(modelId?: string) {

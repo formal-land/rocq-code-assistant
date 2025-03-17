@@ -33,10 +33,10 @@ suite('miniF2F benchmark', () => {
     .flatMap(({ file, theorems }) =>
       theorems.map(theorem => ({ file: file, theorem: theorem })))
     .forEach(({ file, theorem }) => 
-      test(`Test ${file}:${theorem}`, () => _testTheorem(file, theorem)));
+      test(`Test ${file}:${theorem}`, () => testTheorem(file, theorem)));
 });
 
-async function _testTheorem(file: string, proofName: string) {
+async function testTheorem(file: string, proofName: string) {
   if (!vscode.workspace.workspaceFolders) {
     assert.fail();
   } else {
