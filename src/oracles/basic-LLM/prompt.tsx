@@ -1,4 +1,4 @@
-import { PromptElement, BasePromptElementProps, UserMessage, AssistantMessage } from '@vscode/prompt-tsx';
+import { PromptElement, BasePromptElementProps, UserMessage, AssistantMessage, SystemMessage, PromptPiece, PrioritizedList } from '@vscode/prompt-tsx';
 import { Goal, PpString } from '../../lib/coq-lsp/types';
 import { OracleParams } from '../types';
 import { Token } from '../../syntax/tokenizer';
@@ -12,15 +12,12 @@ export class Prompt extends PromptElement<PromptProps> {
 	render() {
 		return (
 			<>
-				<AssistantMessage priority={100}>
-					You are a Coq expert. 
-					<br />
-					You will be provided with a description of a theorem and your task is to solve it.
-					<br />
+				<UserMessage priority={100}>
+					You are a Coq expert. <br />
+					You will be provided with a description of a theorem and your task is to solve it. <br />
 					Return a sequence of valid Coq tactics to solve the goal. Put the tactics in a Markdown 
-					code block that begins with ```coq and ends with ```.
-					<br />
-				</AssistantMessage>
+					code block that begins with ```coq and ends with ```. <br />
+				</UserMessage>
 				<GoalMessage goal={this.props.goal} priority={100} />
 				{ this.props.params?.errorHistory && this.props.params.errorHistory.length > 0 ? 
 				  <ErroryHistoryMessage errorHistory={this.props.params.errorHistory} /> : <></> }
@@ -35,27 +32,26 @@ interface ErrorHistoryMessagePrompt extends BasePromptElementProps {
 
 class ErroryHistoryMessage extends PromptElement<ErrorHistoryMessagePrompt> {
 	render() {
+		const errorHistory: UserMessage[] = [];
+		for (const [idx, { tactics, message }] of this.props.errorHistory.entries()) {
+			errorHistory.push(
+				<UserMessage>
+					* Solution { idx + 1 }: <br/>
+					{'\t'}- tactics: { <AssistantMessage> { tactics.map(tactic => tactic.value).join(' ') } </AssistantMessage> } <br/>
+					{'\t'}- error: { message?.trim().replaceAll('\n', `\n\t${' '.repeat('- error: '.length)}`) } <br/> 
+				</UserMessage>
+			)
+		}
+
 		return(
 			<>
-				<AssistantMessage priority={90}>
+				<UserMessage priority={90}>
 					These solutions have already been tried and they do not work. Please, avoid them. For each of them, a description
 					of the corresponding error is provided. <br/>
-					{
-						this.props.errorHistory.map((error, idx) => 
-							<>
-								* Solution { idx }: <br/>
-								{'\t'} - tactics: { error.tactics.map(tactic => tactic.value).join(' ') } <br/>
-								{ 
-									error.message ? 
-									<> 
-										{'\t'} - error: { error.message.trim().replaceAll('\n', ', ') } <br/> 
-									</> : 
-									<></> 
-								}
-							</>
-						)
-					}
-				</AssistantMessage>
+				</UserMessage>
+				<PrioritizedList priority={0} descending={false}>
+					{errorHistory}
+				</PrioritizedList>
 			</>
 		)
 	}
@@ -75,8 +71,8 @@ class GoalMessage extends PromptElement<GoalMessagePrompt> {
 					You can use the following hypotesis: <br/>
 					{ 
 						this.props.goal.hyps.flatMap(block => block.names.map(name => 
-							<> 
-								* {block.ty}: {name} <br/> 
+							<>
+								* {name} : {block.ty} <br/> 
 							</>
 						))
 					}

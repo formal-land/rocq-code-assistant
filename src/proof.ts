@@ -7,16 +7,22 @@ import { Oracle, OracleParams } from './oracles/types';
 import { Tokenizer } from './syntax/tokenizer';
 import { Scope, Name } from './syntax/scope';
 
-interface InsertResult { status: boolean, message?: string };
+const MAX_ATTEMPT = 3;
+
+namespace PetState {
+  export enum Default {
+    INCONSISTENT
+  }
+}
 
 type Element = ProofBlock | Token;
 
 class ProofBlock {
-  private state: PetState;
+  private state: PetState | PetState.Default;
   private open: boolean = true;
   private elements: Element[] = [];
 
-  constructor(state: PetState) {
+  constructor(state: PetState | PetState.Default.INCONSISTENT) {
     this.state = state;
   }
 
@@ -29,27 +35,23 @@ class ProofBlock {
     return openSubProofs;
   }
 
-  // "forall (X : Type) (test : X -> bool) (l : list X),\nforallb test l = true <-> All (fun x : X => test x = true) l"
-  async insert(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
-    if (!this.open) throw Error('Proof completed');
+  async insert(tokens: Token[], execute: boolean, cancellationToken?: vscode.CancellationToken) {
+    if (!this.open) throw new Error('Proof completed');
 
     const baseLineIdx = tokens[0].range.start.line;
-
     const newElements: Element[] = [];
-    let interState: PetState = this.state;
+    let interState = this.state;
     
     for (const token of tokens) {
-      const debugGoal = await CoqLSPClient
-        .get()
-        .sendRequest(Request.Petanque.goals, { st: interState.st }, cancellationToken);
-
       if (token.scopes.includes(Name.ADMIT))
         newElements.push(new ProofBlock(interState));
       else
         newElements.push({ ...token, range: new vscode.Range(token.range.start.translate(-baseLineIdx), token.range.end.translate(-baseLineIdx)) });
     
-      if (token.scopes.includes(Name.EXECUTABLE)) {
-        try {
+      if (execute && token.scopes.includes(Name.EXECUTABLE)) {
+        if (interState === PetState.Default.INCONSISTENT)
+          throw new Error('Cannot execute in an inconsistent state');
+        else try {
           interState = await CoqLSPClient
             .get()
             .sendRequest(Request.Petanque.run, { st: interState.st, tac: token.value.trim() }, cancellationToken);
@@ -69,6 +71,9 @@ class ProofBlock {
   }
 
   async goals(cancellationToken?: vscode.CancellationToken) {
+    if (this.state === PetState.Default.INCONSISTENT)
+      throw new Error('Cannot get goals of an inconsistent state');
+
     const goals = await CoqLSPClient
       .get()
       .sendRequest(Request.Petanque.goals, { st: this.state.st }, cancellationToken);
@@ -112,7 +117,7 @@ export class ProofMeta {
       .get()
       .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null }, cancellationToken);
     const proofMeta = new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location);
-    if (body) await proofMeta.insert(body, cancellationToken);
+    if (body) await proofMeta.insert(body, 0, true, cancellationToken);
     return proofMeta;
   }
 
@@ -144,10 +149,10 @@ export class ProofMeta {
     return ProofMeta.init(uri, keyword, name, type, location, bodyTokens, cancellationToken);
   }
 
-  async insert(tokens: Token[], cancellationToken?: vscode.CancellationToken, at: number = 0) {
+  async insert(tokens: Token[], at: number, execute: boolean, cancellationToken?: vscode.CancellationToken) {
     const openSubProofs = this.body.openSubProofs();
     if (openSubProofs.length > at)
-      return await openSubProofs[at].insert(tokens, cancellationToken);
+      return await openSubProofs[at].insert(tokens, execute, cancellationToken);
     else throw Error('Index too large');
   }
 
@@ -158,7 +163,7 @@ export class ProofMeta {
     return goals.flat();
   }
 
-  async fill(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
+  async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
     const goals = await this.goals();
     const oracle = oracles[0];
     const params: OracleParams = {
@@ -166,15 +171,23 @@ export class ProofMeta {
     };
 
     for (const [idx, goal] of goals.entries()) {
-      let res: InsertResult = { status: false };
+      let res: { status: boolean, message?: string } = { status: false };
+      let attempts = 0;
+      let answer: string;
+      let tactics: Token[] = [];
 
-      while (res.status === false) {
-        const answer = await oracle.query(goal, params, cancellationToken);
-        const tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-        const res = await this.insert(tactics, cancellationToken, idx);
-        if (!res.status)
+      while (!res.status && attempts < MAX_ATTEMPT) {
+        answer = await oracle.query(goal, params, cancellationToken);
+        tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
+        res = await this.insert(tactics, idx, true, cancellationToken);
+        if (!res.status) {
           params.errorHistory?.push({ tactics: tactics, message: res.message });
+          attempts++;
+        }
       }
+
+      if (attempts === MAX_ATTEMPT) 
+        this.insert(tactics, idx, false, cancellationToken);
     }
     
     /*
