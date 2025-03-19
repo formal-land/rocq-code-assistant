@@ -8,11 +8,14 @@ import * as openAI from '../../../model-providers/openai';
 suite('Extension Test Suite', () => {
   test('Prompt 1', async () => {
     const goal = {
-      ty: 'aaaa',
+      ty: 'test x && forallb test l = true',
       hyps: [
-        { ty: 'bbbb', names: ['a', 'b', 'c'] },
-        { ty: 'cccc', names: ['d', 'e', 'f'] },
-        { ty: 'dddd', names: ['g', 'h', 'i'] }
+        { ty: 'Type', names: ['X'] },
+        { ty: 'X -> bool', names: ['test'] },
+        { ty: 'X', names: ['x', 'y'] },
+        { ty: 'list X', names: ['l'] },
+        { ty: 'forallb test l = true <-> All (fun x0 : X => test x0 = true) l', names: ['IHl'] },
+        { ty: 'test x = true /\\ All (fun x0 : X => test x0 = true) l', names: ['H'] }
       ]
     };
 
@@ -41,6 +44,6 @@ Unable to unify "true" with "test x && forallb test l".
     const prompt = await renderPrompt(
       Prompt, { goal, params }, { modelMaxPromptTokens: 100000 }, openAI.tokenizer('o1-mini'));
 
-    assert.fail(utils.languageModelChatMessagesToString(prompt.messages));
+    assert.fail('\n' + utils.languageModelChatMessagesToString(prompt.messages));
   });
 });
