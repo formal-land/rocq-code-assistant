@@ -18,5 +18,5 @@ export async function pp(model: vscode.LanguageModelChat, text: string, cancella
 
   if (!parsedResponse?.groups) throw Error('Error quering the LLM');
   
-  return parsedResponse.groups['coqCode'];
+  return parsedResponse.groups['coqCode'].trim();
 }
