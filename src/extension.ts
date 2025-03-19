@@ -84,7 +84,7 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
   }
 
   const proof = await ProofMeta.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
-  proof.fill([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
+  await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
   const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString(), cancellationToken);
   textEditor.edit(edit => edit.replace(proof.editorLocation, ppProof));
 }
