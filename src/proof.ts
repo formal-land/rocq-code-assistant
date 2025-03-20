@@ -10,9 +10,7 @@ import { Scope, Name } from './syntax/scope';
 const MAX_ATTEMPT = 3;
 
 namespace PetState {
-  export enum Default {
-    INCONSISTENT
-  }
+  export enum Default { INCONSISTENT }
 }
 
 type Element = ProofBlock | Token;
@@ -166,20 +164,21 @@ export class ProofMeta {
   async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
     const goals = await this.goals();
     const oracle = oracles[0];
-    const params: OracleParams = {
-      errorHistory: []
-    };
 
-    for (const [idx, goal] of goals.entries()) {
+    for (const [, goal] of goals.entries()) {
       let res: { status: boolean, message?: string } = { status: false };
       let attempts = 0;
       let answer: string;
       let tactics: Token[] = [];
 
+      const params: OracleParams = {
+        errorHistory: []
+      };
+
       while (!res.status && attempts < MAX_ATTEMPT) {
         answer = await oracle.query(goal, params, cancellationToken);
         tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-        res = await this.insert(tactics, idx, true, cancellationToken);
+        res = await this.insert(tactics, 0, true, cancellationToken);
         if (!res.status) {
           params.errorHistory?.push({ tactics: tactics, message: res.message });
           attempts++;
@@ -187,24 +186,8 @@ export class ProofMeta {
       }
 
       if (attempts === MAX_ATTEMPT) 
-        this.insert(tactics, idx, false, cancellationToken);
+        this.insert(tactics, 0, false, cancellationToken);
     }
-    
-    /*
-    await Promise.all(
-      goals.map(async (goal, idx) => {
-        let res: InsertResult = { status: false };
-
-        while (!res.status) {
-          const answer = await oracle.query(goal, undefined, cancellationToken);
-          const tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-          const res = await this.insert(tactics, cancellationToken, idx);
-          if (!res.status)
-            params.errorHistory?.push({ tactics: tactics, message: res.message });
-        }
-      })
-    ); 
-    */
 
     return this;
   }
