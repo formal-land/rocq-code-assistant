@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import * as assert from 'assert';
-import { renderPrompt } from '@vscode/prompt-tsx';
 import * as utils from '../../../utils';
-import { Prompt } from '../../../oracles/basic-LLM/prompt';
-import * as openAI from '../../../model-providers/openai';
+import * as prompt from '../../../oracles/basic-LLM/prompt';
 
 suite('Extension Test Suite', () => {
   test('Prompt 1', async () => {
@@ -41,9 +39,8 @@ Unable to unify "true" with "test x && forallb test l".
       }]
     };
 
-    const prompt = await renderPrompt(
-      Prompt, { goal, params }, { modelMaxPromptTokens: 100000 }, openAI.tokenizer('o1-mini'));
+    const messages = prompt.render(goal, params);
 
-    assert.fail('\n' + utils.languageModelChatMessagesToString(prompt.messages));
+    assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });
 });

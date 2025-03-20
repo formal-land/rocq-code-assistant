@@ -1,12 +1,10 @@
 import * as vscode from 'vscode';
-import { renderPrompt } from '@vscode/prompt-tsx';
-import { Prompt } from './prompt';
+import * as prompt from './prompt';
 
-export async function pp(model: vscode.LanguageModelChat, text: string, cancellationToken?: vscode.CancellationToken) {
-  const prompt = await renderPrompt(
-    Prompt, { text }, { modelMaxPromptTokens: model.maxInputTokens }, model);
+export async function pp(model: vscode.LanguageModelChat, proof: string, cancellationToken?: vscode.CancellationToken) {
+  const messages = prompt.render(proof);
 
-  const rawResponse = await model.sendRequest(prompt.messages, {}, cancellationToken);
+  const rawResponse = await model.sendRequest(messages, {}, cancellationToken);
   
   const fragments: string[] = [];
   for await (const fragment of rawResponse.text)
