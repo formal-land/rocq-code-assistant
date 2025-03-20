@@ -35,11 +35,11 @@ class ErroryHistoryMessage extends PromptElement<ErrorHistoryMessagePrompt> {
 		const errorHistory: UserMessage[] = [];
 		for (const [idx, { tactics, message }] of this.props.errorHistory.entries()) {
 			errorHistory.push(
-				<UserMessage>
+				<AssistantMessage>
 					* Solution { idx + 1 }: <br/>
-					{'\t'}- tactics: { <AssistantMessage> { tactics.map(tactic => tactic.value).join(' ') } </AssistantMessage> } <br/>
+					{'\t'}- tactics: { tactics.map(tactic => tactic.value).join(' ') } <br/>
 					{'\t'}- error: { message?.trim().replaceAll('\n', `\n\t${' '.repeat('- error: '.length)}`) } <br/> 
-				</UserMessage>
+				</AssistantMessage>
 			)
 		}
 

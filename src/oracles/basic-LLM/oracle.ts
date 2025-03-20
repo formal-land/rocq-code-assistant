@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { renderPrompt } from '@vscode/prompt-tsx';
+import * as utils from '../../utils';
 import { Goal, PpString } from '../../lib/coq-lsp/types';
 import { Prompt } from './prompt';
 import { Oracle, OracleParams } from '../types';
@@ -14,6 +15,8 @@ export class BasicLLM implements Oracle {
   async query(goal: Goal<PpString>, params?: OracleParams, cancellationToken?: vscode.CancellationToken) {
     const prompt = await renderPrompt(
       Prompt, { goal, params }, { modelMaxPromptTokens: this.model.maxInputTokens }, this.model);
+
+    console.log(utils.languageModelChatMessagesToString(prompt.messages));
 
     const rawResponse = await this.model.sendRequest(
       prompt.messages, {}, cancellationToken);
