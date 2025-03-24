@@ -16,19 +16,25 @@ export class BasicLLM implements Oracle {
 
     console.log(utils.languageModelChatMessagesToString(messages));
 
-    const rawResponse = await this.model.sendRequest(
-      messages, {}, cancellationToken);
+    const rawResponse = await this.model.sendRequest(messages, {}, cancellationToken);
     
     const fragments: string[] = [];
     for await (const fragment of rawResponse.text)
       fragments.push(fragment);
+    const rawResponseText = fragments.join('');
 
-    const parsedResponse = fragments
-      .join('')
-      .match(/```coq(?<coqCode>[\s\S]*)```/);
+    const response = [];
+    for (const match of rawResponseText.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)) {
+      let coqCode = match.groups?.coqCode;
+      if (coqCode) {
+        const proofBlockRegexRes = coqCode.match(/Proof\.(?<tactics>[\s\S]*)Qed\./m)?.groups;
+        if (proofBlockRegexRes) // Response in Proof. ... Qed. block
+          coqCode = proofBlockRegexRes.tactics;
 
-    if (!parsedResponse?.groups) throw Error('Error quering the LLM');
+        response.push(coqCode);
+      }
+    }
     
-    return parsedResponse.groups['coqCode'];
+    return response;
   }
 }
