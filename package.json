@@ -18,15 +18,15 @@
     "commands": [
       {
         "command": "rocq-coding-assistant.hello-world",
-        "title": "Hello World"
+        "title": "Rocq code assistant: hello world"
       },
       {
         "command": "rocq-coding-assistant.solve",
-        "title": "Solve with rocq-coding-assistant"
+        "title": "Rocq code assistant: solve"
       },
       {
         "command": "rocq-coding-assistant.select-model",
-        "title": "Select the model"
+        "title": "Rocq code assistant: select the model"
       }
     ],
     "menus": {
