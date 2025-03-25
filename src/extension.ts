@@ -40,12 +40,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const regSolve = vscode.commands.registerTextEditorCommand(Commands.SOLVE,
     async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: any, proofName?: string) => {
-      while (!selectedModel) 
-        await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
+      while (!selectedModel) await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
 
-      return vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
-        (progress, cancellationToken) => solveCallback(textEditor, edit, resource, proofName, cancellationToken)
-      );
+      const proof = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
+        (progress, cancellationToken) => solveCallback(textEditor, edit, resource, proofName, cancellationToken));
+
+      if (false) {
+        const selection = await vscode.window.showInformationMessage('Rocq code assistant couldn\'t find a proof. Do you want to show it anyway?', 'Yes', 'No');
+        if (selection === 'No') return;
+      }
+
+      const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
+      textEditor.edit(edit => edit.replace(proof.editorLocation, ppProof));
     }
   );
   context.subscriptions.push(regSolve);
@@ -84,9 +90,7 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
   }
 
   const proof = await ProofMeta.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
-  await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
-  const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString(), cancellationToken);
-  textEditor.edit(edit => edit.replace(proof.editorLocation, ppProof));
+  return await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
 }
 
 async function selectModelCallback(modelId?: string) {
