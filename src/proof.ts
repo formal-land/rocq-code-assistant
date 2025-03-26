@@ -41,7 +41,6 @@ export class Proof {
       } else {
         workingBlock.repair();
       }
-      
     }
     return proof;
   }
@@ -108,11 +107,11 @@ namespace WorkingBlock {
 }
 
 export class WorkingBlock {
-  readonly body: WorkingBlock.Element[];
+  private readonly startingState: PetState;
+  readonly body: WorkingBlock.Element[] = [];
 
   constructor(startingState: PetState) {
-    this.body = [{ token: { value: '', scopes: [Name.IGNORE], range: new vscode.Range(0,0,0,0) }, 
-      petState: startingState, accepted: true }];
+    this.startingState = startingState;
   }
 
   async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
@@ -122,11 +121,11 @@ export class WorkingBlock {
       let element: WorkingBlock.Element = { token: token, accepted: false };
      
       if (token.scopes.includes(Name.EXECUTABLE)) {
-        const execPetState = this.body.at(-1)?.petState;
+        const execPetState = this.body.at(-1) ? this.body.at(-1)?.petState : this.startingState;
         if (execPetState) {
           try {
             element.petState = await CoqLSPClient.get()
-              .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value.trim() }, cancellationToken);
+              .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value }, cancellationToken);
           } catch (error) {
             const parsedMessage = (error as Error).message.match(/Coq: (?<message>[\s\S]*)/m);
             if (parsedMessage && parsedMessage.groups)
@@ -195,7 +194,6 @@ export class WorkingBlock {
   }
 
   toString(): string {
-    return this.body.reduce((str, element) => 
-      element.token.scopes.includes(Name.IGNORE) ? str : str + ' ' + element.token.value, '');
+    return this.body.join(' ');
   }
 }
