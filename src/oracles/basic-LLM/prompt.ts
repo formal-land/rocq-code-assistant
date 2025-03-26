@@ -7,7 +7,7 @@ export function render(goal: Goal<PpString>, params?: OracleParams) {
 
   const introPart = LanguageModelChatMessage.User(`You are a Coq expert.
 You will be provided with a description of a theorem and your task is to solve it.
-Return two solutions consisting of a sequence of valid Coq tactics to solve the goal. 
+Return two alternative solutions consisting of a sequence of valid Coq tactics to solve the goal. 
 Put each solution in a Markdown code block that begins with \`\`\`coq and ends with \`\`\`.`);
 
   const hypotesisPart = goal.hyps

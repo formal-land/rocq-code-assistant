@@ -42,10 +42,10 @@ export async function activate(context: vscode.ExtensionContext) {
     async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: any, proofName?: string) => {
       while (!selectedModel) await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
 
-      const proof = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
+      const { proof, success } = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
         (progress, cancellationToken) => solveCallback(textEditor, edit, resource, proofName, cancellationToken));
 
-      if (false) {
+      if (!success) {
         const selection = await vscode.window.showInformationMessage('Rocq code assistant couldn\'t find a proof. Do you want to show it anyway?', 'Yes', 'No');
         if (selection === 'No') return;
       }
@@ -90,8 +90,8 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
   }
 
   const proof = await Proof.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
-  await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
-  return proof;
+  const success =await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
+  return { proof, success };
 }
 
 async function selectModelCallback(modelId?: string) {

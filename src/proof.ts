@@ -5,16 +5,6 @@ import { CoqLSPClient, Request } from './coq-lsp-client';
 import { Name, Scope } from './syntax/scope';
 import { Oracle, OracleParams } from './oracles/types';
 
-namespace Proof {
-  export interface Metadata {
-    keyword: string,
-    uri: string,
-    editorLocation: vscode.Range
-  }
-
-  export type Element = Token | WorkingBlock;
-}
-
 export class Proof {
   readonly name: string;
   readonly type: string;
@@ -31,13 +21,13 @@ export class Proof {
   private static async init(name: string, type: string, metadata: Proof.Metadata, body?: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
       .sendRequest(Request.Petanque.start, { uri: metadata.uri, thm: name, pre_commands: null }, cancellationToken);
-    const workingBlock = new WorkingBlock(startingState);
+    const workingBlock = new Proof.WorkingBlock(startingState, startingState);
     const proof = new Proof(name, type, [workingBlock], metadata);
     if (body) {
       const tryResult = await workingBlock.try(body, cancellationToken);
       if (tryResult.status) {
         workingBlock.accept();
-        proof.merge(workingBlock, true);
+        proof.merge(workingBlock);
       } else {
         workingBlock.repair();
       }
@@ -73,127 +63,361 @@ export class Proof {
     return Proof.init(name, type, { keyword, uri, editorLocation }, bodyTokens, cancellationToken);
   }
 
-  private merge(workingBlock: WorkingBlock, templatize: boolean) {
-    const newElements = workingBlock.body
-      .slice(1)
-      .map(element => {
-        const prePetState = workingBlock.body[workingBlock.body.indexOf(element) - 1].petState;
-        return templatize && element.token.scopes.includes(Name.ADMIT) && prePetState ?
-          new WorkingBlock(prePetState) : element.token;
-      });
-
-    this.body.splice(this.body.indexOf(workingBlock), 1, ...newElements);
+  private merge(workingBlock: Proof.WorkingBlock) {
+    this.body.splice(this.body.indexOf(workingBlock), 1, ...workingBlock.templatize());
   }
 
   async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
-    const workingBlocks = this.body.filter(element => element instanceof WorkingBlock);
-    return Promise.all(workingBlocks.map(workingBlock => {
+    const workingBlocks = this.body.filter(element => element instanceof Proof.WorkingBlock);
+    /* await Promise.all(workingBlocks.map(workingBlock => {
       return workingBlock.autocomplete(oracles, cancellationToken);
+    })); */
+    for (const workingBlock of workingBlocks) {
+      await workingBlock.autocomplete(oracles, cancellationToken);
     }
-    ));
+
+    if (!this.body.find(element => !element.petState)) {
+      const lastElement = this.body.at(-1);
+      if (lastElement) lastElement.tokens()[0].value = 'Qed.';
+      return true;
+    } else return false;
+  }
+
+  toString() {
+    return `${this.metadata.keyword} ${this.name}: ${this.type}
+${
+  this.body
+    .flatMap(element => element.tokens())
+    .map(token => token.value)
+    .join(' ')
+}`;
   }
 }
 
-namespace WorkingBlock {
-  export interface Element {
-    token: Token, 
-    petState?: PetState, // Petanque state after the execution of the token
-    accepted: boolean
+export namespace Proof {
+
+  /** 
+   * Metadata for a {@link Proof}. 
+   */
+  export interface Metadata {
+
+    /**
+     * The keyword that introduces the proof definition (Theorem, Lemma, etc.)
+     */
+    keyword: string,
+
+    /**
+     * The uri of the file where the proof is defined.
+     */
+    uri: string, 
+    
+    /**
+     * Location of the proof in the edited file.
+     */
+    editorLocation: vscode.Range
   }
 
-  export type TryResult = 
-    { status: true } | 
-    { status: false, error: { at: number, message: string }}
-}
+  /**
+   * Each {@link Element} represents a more or less structured part of a proof, containing zero or more 
+   * tokens. 
+   */
+  export abstract class Element {
 
-export class WorkingBlock {
-  private readonly startingState: PetState;
-  readonly body: WorkingBlock.Element[] = [];
+    /**
+     * Petanque state that represents, from the outside, the result of a possible global successfull 
+     * execution of this element.
+     */
+    petState?: PetState;
 
-  constructor(startingState: PetState) {
-    this.startingState = startingState;
+    /**
+     * @param petState Pre-assigned Petanque state that represents, from the outside, the result 
+     * of a possible global successfull execution of this element.
+     */
+    constructor(petState?: PetState) {
+      this.petState = petState;
+    }
+
+    /**
+     * The sequence of tokens contained in this element.
+     * 
+     * @returns Zero or more tokens contained in this element.
+     */
+    abstract tokens(): Token[];
   }
 
-  async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
-    let result: WorkingBlock.TryResult = { status: true };
+  /**
+   * Represents an {@link Element} containing a single token.
+   */
+  export class SingleToken extends Element {
 
-    for (const [idx, token] of tokens.entries()) {
-      let element: WorkingBlock.Element = { token: token, accepted: false };
-     
-      if (token.scopes.includes(Name.EXECUTABLE)) {
-        const execPetState = this.body.at(-1) ? this.body.at(-1)?.petState : this.startingState;
-        if (execPetState) {
-          try {
-            element.petState = await CoqLSPClient.get()
-              .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value }, cancellationToken);
-          } catch (error) {
-            const parsedMessage = (error as Error).message.match(/Coq: (?<message>[\s\S]*)/m);
-            if (parsedMessage && parsedMessage.groups)
-              result = { status: false, error: { at: idx, message: parsedMessage.groups['message'] }};
+    /**
+     * The token contained in this element.
+     */
+    token: Token;
+
+    /**
+     * @param token The token to be contained in this element.
+     * @param petState Pre-assigned Petanque state that represents, from the outside, the result 
+     * of a possible global successfull execution of this element.
+     */
+    constructor(token: Token, petState?: PetState) {
+      super(petState);
+      this.token = token;
+    }
+
+    /**
+     * @returns A list with the only token contained in this element.
+     */
+    tokens() {
+      return [this.token];
+    }
+  }
+
+  /**
+   * Represents an {@link Element} containing multiple tokens. Allows for the modification of the 
+   * tokens using a simple interaction protocol.
+   */
+  export class WorkingBlock extends Element {
+    readonly elements: WorkingBlock.Element[];
+  
+    /**
+     * @param petState A Petanque state that represents, from the outside, a global successfull 
+     * execution of this element.
+     * @param startingState A Petanque state that is used as the starting execution point of the 
+     * tokens added to the block.
+     */
+    constructor(petState: PetState, startingState: PetState) {
+      super(petState);
+      this.elements = [ new WorkingBlock.StartToken(startingState) ];
+    }
+
+    /**
+     * @returns A plain list of tokens contained in each subelement.
+     */
+    tokens() {
+      return this.elements.flatMap(element => element.tokens());
+    }
+  
+    /**
+     * 
+     * @param tokens 
+     * @param cancellationToken 
+     * @returns 
+     */
+    async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
+      let result: WorkingBlock.TryResult = { status: true };
+
+      for (const [idx, token] of tokens.entries()) {            
+        const execPetState = this.elements.at(-1)?.petState;
+        let newPetState;
+        if (token.scopes.includes(Name.EXECUTABLE)) {
+          if (execPetState) {
+            try {
+              newPetState = await CoqLSPClient.get()
+                .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value }, cancellationToken);
+            } catch (error) {
+              const parsedMessage = (error as Error).message.match(/Coq: (?<message>[\s\S]*)/m);
+              if (parsedMessage && parsedMessage.groups)
+                result = { status: false, error: { at: idx, message: parsedMessage.groups['message'] }};
+            }
           }
+        } else {
+          newPetState = this.elements.at(-1)?.petState;
         }
-      } else {
-        element.petState = this.body.at(-1)?.petState;
+  
+        this.elements.push(new WorkingBlock.SingleToken(token, false, execPetState, newPetState));
       }
-
-      this.body.push(element);
+  
+      return result;
+    }
+  
+    /**
+     * Accepts all the pending tokens.
+     */
+    accept() {
+      this.elements.forEach(element => { if (!element.accepted) element.accepted = true; });
+    }
+  
+    /**
+     * Rejects all the pending tokens.
+     */
+    reject() {
+      this.elements.splice(this.elements.findIndex(element => !element.accepted));
     }
 
-    return result;
-  }
+    /**
+     * 
+     */
+    repair() {
+      throw new Error('To be implemented!');
+    }
 
-  accept() {
-    this.body.forEach(element => element.accepted = true);
-  }
-
-  reject() {
-    this.body.splice(
-      this.body.findIndex(element => !element.accepted));
-  }
-
-  repair() {
-    throw new Error('To be implemented!');
-  }
-
-  async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
-    const MAX_ATTEMPTS = 3;
-    const answers = [];
-    const oracleParams: OracleParams = {
-      errorHistory: []
-    };
-    let attempts = 0;
-    let goals;
-
-    while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
-      if (answers.length === 0) {
-        answers.push(...await oracles[0].query(goals[0], oracleParams, cancellationToken));
-        attempts++;
+    /**
+     * @returns A list of {@link Element} where admit are substitued by new {@link WorkingBlock}.
+     */
+    templatize() {
+      return this.elements.flatMap(element => element.templatize());
+    }
+  
+    /**
+     * @param oracles List of oracles to be called.
+     * @param cancellationToken
+     */
+    async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
+      const MAX_ATTEMPTS = 3;
+      const answers = [];
+      const oracleParams: OracleParams = {
+        errorHistory: []
+      };
+      let attempts = 0;
+      let goals;
+  
+      while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
+        if (answers.length === 0) {
+          answers.push(...await oracles[0].query(goals[0], oracleParams, cancellationToken));
+          attempts++;
+        }
+        
+        const answer = answers.pop();
+        if (answer) {
+          const tokens = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
+          const tryResult = await this.try(tokens, cancellationToken);
+          if (!tryResult.status)
+            oracleParams.errorHistory?.push({ tactics: tokens, message: tryResult.error.message });
+          if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
+            this.accept();
+          else
+            this.reject();
+        }
       }
-      
-      const answer = answers.pop();
-      if (answer) {
-        const tokens = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-        const tryResult = await this.try(tokens, cancellationToken);
-        if (!tryResult.status)
-          oracleParams.errorHistory?.push({ tactics: tokens, message: tryResult.error.message });
-        if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
-          this.accept();
-        else
-          this.reject();
-      }
+    }
+  
+    /**
+     * @param cancellationToken 
+     * @returns The current open goal for this block.
+     */
+    async goals(cancellationToken?: vscode.CancellationToken) {
+      const lastPetState = this.elements.at(-1)?.petState;
+      if (lastPetState) {
+        const goals = await CoqLSPClient.get()
+          .sendRequest(Request.Petanque.goals, { st: lastPetState.st }, cancellationToken);
+        return goals.goals;
+      } else return [];
+    }
+  
+    /**
+     * @returns A string representation of this block.
+     */
+    toString(): string {
+      return this.elements
+        .flatMap(element => element.tokens())
+        .map(token => token.value)
+        .join(' ');
     }
   }
 
-  async goals(cancellationToken?: vscode.CancellationToken) {
-    const lastPetState = this.body.at(-1)?.petState;
-    if (lastPetState) {
-      const goals = await CoqLSPClient.get()
-        .sendRequest(Request.Petanque.goals, { st: lastPetState.st }, cancellationToken);
-      return goals.goals;
-    } else return [];
-  }
+  export namespace WorkingBlock {
 
-  toString(): string {
-    return this.body.join(' ');
+    /**
+     * Extension of {@link Proof.Element} to allow incremental build of a proof.
+     */
+    export abstract class Element extends Proof.Element {
+
+      /**
+       * Flag to determine if the element has been permanently accepted insied the 
+       * {@link WorkingBlock}.
+       */
+      accepted: boolean;
+
+      /**
+       * @param accepted If the element has been permanently accepted insied the {@link WorkingBlock}.
+       * @param petState A possibile pre-assigned Petanque state that represents, from the outside, a
+       * global successfull execution of this element.
+       */
+      constructor(accepted: boolean, petState?: PetState) {
+        super();
+        this.accepted = accepted;
+        this.petState = petState;
+      }
+
+      /**
+       * Generates a templatized version of this element.
+       */
+      abstract templatize(): Proof.Element[];
+    }
+
+    /**
+     * {@link WorkingBlock} version of {@link Proof.SingleToken}.
+     */
+    export class SingleToken extends Element {
+
+      /**
+       * The state in which the element has been executed.
+       */
+      prePetState?: PetState;
+
+      /**
+       * The token contained in this element.
+       */
+      token: Token;
+
+      /**
+       * 
+       * @param token The token contained in this element.
+       * @param accepted If the element has been permanently accepted insied the {@link WorkingBlock}.
+       * @param prePetState The state in which the element has been executed.
+       * @param petState A possibile pre-assigned Petanque state that represents, from the outside, a
+       * global successfull execution of this element.
+       */
+      constructor(token: Token, accepted: boolean, prePetState?: PetState, petState?: PetState) {
+        super(accepted, petState);
+        this.prePetState = prePetState;
+        this.token = token;
+      }
+
+      /**
+       * If this element contains a token that is an 'admit' and is part of a valid executions,
+       * returns a new {@link WorkingBlock} TODO:!
+       * @returns 
+       */
+      templatize() {
+        if (this.petState && this.prePetState && this.token.scopes.includes(Name.ADMIT))
+          return [ new WorkingBlock(this.petState, this.prePetState) ];
+        else 
+          return [ new Proof.SingleToken(this.token, this.petState) ];
+      }
+
+      tokens() { return [ this.token ]; }
+    }
+
+    /**
+     * Represents a convenient way of storing the Petanque start state for a {@link WorkingBlock}.
+     */
+    export class StartToken extends Element {
+
+      /**
+       * @param petState A Petanque state.
+       */
+      constructor(petState: PetState) {
+        super(true, petState);
+      }
+
+      /**
+       * @returns An empty array. This element is ignored while templatizing.
+       */
+      templatize() { return []; }
+  
+      /**
+       * @returns An empty array. No token is contained in this element.
+       */
+      tokens() { return []; }
+    }
+
+    /**
+     * Result of the execution of a {@link WorkingBlock.try}.
+     */
+    export type TryResult = 
+      { status: true } | 
+      { status: false, error: { at: number, message: string }}
   }
 }
