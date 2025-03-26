@@ -29,8 +29,8 @@
       ]
     },
     "proof_body": {
-      "begin": "(?<=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
-      "end": "(?=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
+      "begin": "(?=\\b(Proof(?:\\s+(Mode|using|with))?)\\.)",
+      "end": "(?<=\\b(Qed|Defined|Save|Abort(?:\\s+All)?|Admitted)\\.)",
       "name": "meta.proof.body.coq",
       "patterns": [
         { "include": "source.coq.proof.body" }

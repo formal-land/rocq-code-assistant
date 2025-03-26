@@ -6,21 +6,21 @@ Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
 //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.head.type.coq - meta.proof.head.name.coq
 //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq
 Proof.
-//<----- meta.proof.coq - meta.proof.body.coq meta.proof.head.coq
+// <----- meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq - meta.proof.head.coq
   intros A B HA HB. split.
-//^^^^^^^^^^^^^^^^^ meta.proof.body.tactic.coq
-//                  ^^^^^^ meta.proof.body.tactic.coq
+//^^^^^^^^^^^^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
+//                  ^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
   - apply HA.
-//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//  ^^^^^^^^^ meta.proof.body.tactic.coq
+//^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//  ^^^^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
   - apply HB.
-//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//  ^^^^^^^^^ meta.proof.body.tactic.coq
+//^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//  ^^^^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq - meta.proof.head.coq
 Qed. (* Outside of proof *)
-// <---- meta.proof.coq - meta.proof.body.coq meta.proof.head.coq
+// <---- meta.proof.coq  meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //   ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq meta.proof.head.coq
 
 (* Outside of proof *)
@@ -32,16 +32,16 @@ Theorem ex_falso_quodlibet : forall (P : Prop), False -> P.
 //                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.head.type.coq - meta.proof.head.name.coq
 //     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq - meta.proof.body.coq
 Proof.
-//<----- meta.proof.coq - meta.proof.body.coq meta.proof.head.coq
+// <----- meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq - meta.proof.head.coq
   intros P contra.
-//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq
+//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
   destruct contra.  Qed. (* Outside of proof *)
-//                  ^^^ - meta.proof.body.coq
-//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq
+//                  ^^^ meta.proof.coq  meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
+//^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //                       ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
 
 (* Outside of proof *)
-// <---------------------- - meta.proof.coq meta.proof.body.coq meta.proof.head.coq
+// <---------------------- - meta.proof.coq meta.proof.body.coq meta.proof.head.coq meta.proof.body.executable.coq
 
 Theorem
 // <------- meta.proof.coq meta.proof.head.coq meta.proof.head.keyword.coq - meta.proof.body.coq
@@ -52,21 +52,21 @@ Theorem
   P /\ Q -> Q /\ P.
 //^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq meta.proof.head.type.coq - meta.proof.body.coq meta.proof.head.name.coq
 Proof.
-//<----- meta.proof.coq - meta.proof.body.coq meta.proof.head.coq
+// <----- meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq - meta.proof.head.coq
   intros P Q [HP HQ].
-//^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
+//^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.executable.coq
   split.
-//^^^^^^ meta.proof.body.tactic.coq
+//^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
     + (* left *) apply HQ   .
-//  ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//    ^^^^^^^^^^ comment.block.coq
-//               ^^^^^^^^^^^^ meta.proof.body.tactic.coq
+//  ^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//    ^^^^^^^^^^ comment.block.coq - meta.proof.body.executable.coq
+//               ^^^^^^^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.body.coq
     + (* right *) apply HP.  Qed.
-//  ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//    ^^^^^^^^^^^ meta.proof.coq
-//                ^^^^^^^^^ meta.proof.body.tactic.coq
-//                           ^^^ - meta.proof.body.coq
+//  ^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//    ^^^^^^^^^^^ meta.proof.coq - meta.proof.body.executable.coq
+//                ^^^^^^^^^ meta.proof.body.tactic.coq meta.proof.body.executable.coq
+//                           ^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.body.coq
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq
 (* Outside of proof *)
@@ -75,17 +75,18 @@ Proof.
 Lemma and_intro (A B : Prop) : A -> B -> A /\ B.
 //               ^^^^^^^^^^ meta.proof.head.bind.coq
 Proof.
+// <----- meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq - meta.proof.head.coq
   intros A B HA HB. split.
   { admit. }
-//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//         ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//  ^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.tactic.admit.coq
+//^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//         ^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//  ^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq meta.proof.body.tactic.admit.coq
   { admit  . }
-//^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//           ^ meta.proof.body.focus.coq - meta.proof.body.tactic.coq
-//  ^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.tactic.admit.coq
+//^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//           ^ meta.proof.body.focus.coq meta.proof.body.executable.coq - meta.proof.body.tactic.coq
+//  ^^^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq meta.proof.body.tactic.admit.coq
 Admitted.
-// <-------- meta.proof.coq - meta.proof.body.coq
+// <-------- meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 
 (* Outside of proof *)
 // <---------------------- - meta.proof.coq meta.proof.body.coq
@@ -101,5 +102,6 @@ Theorem and_commut :
 (* Inside of proof *)
 // <--------------------- meta.proof.coq meta.proof.head.coq - meta.proof.body.coq
 Proof.
+// <----- meta.proof.coq  meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 (* Inside of proof body *)
 // <-------------------------- meta.proof.coq meta.proof.body.coq

@@ -13,24 +13,24 @@ Lemma add_is_valid (kind : IntegerKind.t) (z1 z2 z : Z)
       Integer.Valid.t kind z.
 //    ^^^^^^^^^^^^^^^^^^^^^^ meta.proof.coq meta.proof.head.coq meta.proof.head.type.coq - meta.proof.head.name.coq meta.proof.body.coq
     Proof.
-//  ^^^^^ meta.proof.coq - meta.proof.body.coq
+//  ^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
       unfold
-//    ^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq
+//    ^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
         Integer.Valid.t,
-//      ^^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq
+//      ^^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
         BinOp.Wrap.add,
-//      ^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq
+//      ^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
         BinOp.Wrap.make_arithmetic
-//      ^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq
+//      ^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
         in *. (* Outside of meta.proof.body.tactic.coq *)
-//      ^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq
+//      ^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //            ^^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.body.tactic.coq
       rewrite IntegerKind.eqb_refl in H_v.
       simpl in H_v.
       injection H_v; clear H_v; intro H_v; rewrite <- H_v.
       apply Integer.normalize_wrap_is_valid.
     Qed. (* Outside of proof *)
-//  ^^^ meta.proof.coq - meta.proof.body.coq
+//  ^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
 //       ^^^^^^^^^^^^^^^^^^^^^^ - meta.proof.coq meta.proof.body.coq
 
 Lemma Forall_nth_error {A : Set} (P : A -> Prop) (l : list A) (n : nat)
@@ -51,7 +51,9 @@ Lemma Forall_nth_error {A : Set} (P : A -> Prop) (l : list A) (n : nat)
     end.
 //  ^^^ meta.proof.coq meta.proof.head.coq meta.proof.head.type.coq
   Proof.
+//^^^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq - meta.proof.head.coq
     generalize dependent n.
     induction H_l  ; intros; destruct n; cbn; sfirstorder.
-//  ^^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq
+//  ^^^^^^^^^^^^^^^^ meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
   Qed.
+//^^^^ meta.proof.coq meta.proof.body.coq meta.proof.body.tactic.coq meta.proof.body.executable.coq
