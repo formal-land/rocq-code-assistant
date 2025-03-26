@@ -15,5 +15,6 @@ export enum Name {
   TACTIC = 'meta.proof.body.tactic.coq',
   ADMIT = 'meta.proof.body.tactic.admit.coq',
   FOCUSING_CONSTRUCT = 'meta.proof.body.focus.coq',
-  EXECUTABLE = 'meta.proof.body.executable'
+  EXECUTABLE = 'meta.proof.body.executable',
+  IGNORE = 'meta.proof.body.ignore.coq'
 }

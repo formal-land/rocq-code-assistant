@@ -7,7 +7,7 @@ import * as Prettier from './syntax/prettier/prettier';
 import { Tokenizer } from './syntax/tokenizer';
 import { CoqLSPClient } from './coq-lsp-client';
 import { Scope } from './syntax/scope';
-import { ProofMeta } from './proof';
+import { Proof } from './proof';
 import { BasicLLM } from './oracles/basic-LLM/oracle';
 
 export namespace Commands {
@@ -51,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
       }
 
       const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
-      textEditor.edit(edit => edit.replace(proof.editorLocation, ppProof));
+      textEditor.edit(edit => edit.replace(proof.metadata.editorLocation, ppProof));
     }
   );
   context.subscriptions.push(regSolve);
@@ -89,8 +89,9 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
     throw new Error('Theorem not found.');
   }
 
-  const proof = await ProofMeta.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
-  return await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
+  const proof = await Proof.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
+  await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
+  return proof;
 }
 
 async function selectModelCallback(modelId?: string) {

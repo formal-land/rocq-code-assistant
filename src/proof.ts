@@ -1,44 +1,49 @@
 import * as vscode from 'vscode';
-import { CoqLSPClient } from './coq-lsp-client';
-import { Request } from './coq-lsp-client';
+import { Token, Tokenizer } from './syntax/tokenizer';
 import { PetState } from './lib/coq-lsp/types';
-import { Token } from './syntax/tokenizer';
+import { CoqLSPClient, Request } from './coq-lsp-client';
+import { Name, Scope } from './syntax/scope';
 import { Oracle, OracleParams } from './oracles/types';
-import { Tokenizer } from './syntax/tokenizer';
-import { Scope, Name } from './syntax/scope';
 
-const MAX_ATTEMPT = 3;
+namespace Proof {
+  export interface Metadata {
+    keyword: string,
+    uri: string,
+    editorLocation: vscode.Range
+  }
 
-namespace PetState {
-  export enum Default { INCONSISTENT }
+  export type Element = Token | WorkingBlock;
 }
 
-type Element = ProofBlock | Token;
-
-export class ProofMeta {
-  readonly uri: string;
-  readonly keyword: string;
+export class Proof {
   readonly name: string;
   readonly type: string;
-  readonly body: ProofBlock;
-  readonly editorLocation: vscode.Range;
+  readonly body: Proof.Element[];
+  readonly metadata: Proof.Metadata;
 
-  private constructor(uri: string, keyword: string, name: string, type: string, body: ProofBlock, editorLocation: vscode.Range) {
-    this.keyword = keyword;
+  private constructor(name: string, type: string, body: Proof.Element[], metadata: Proof.Metadata) {
     this.name = name;
     this.type = type;
     this.body = body;
-    this.uri = uri;
-    this.editorLocation = editorLocation;
+    this.metadata = metadata;
   }
 
-  private static async init(uri: string, keyword: string, name: string, type: string, location: vscode.Range, body?: Token[], cancellationToken?: vscode.CancellationToken) {
-    const startingState = await CoqLSPClient
-      .get()
-      .sendRequest(Request.Petanque.start, { uri: uri, thm: name, pre_commands: null }, cancellationToken);
-    const proofMeta = new ProofMeta(uri, keyword, name, type, new ProofBlock(startingState), location);
-    if (body) await proofMeta.insert(body, 0, true, cancellationToken);
-    return proofMeta;
+  private static async init(name: string, type: string, metadata: Proof.Metadata, body?: Token[], cancellationToken?: vscode.CancellationToken) {
+    const startingState = await CoqLSPClient.get()
+      .sendRequest(Request.Petanque.start, { uri: metadata.uri, thm: name, pre_commands: null }, cancellationToken);
+    const workingBlock = new WorkingBlock(startingState);
+    const proof = new Proof(name, type, [workingBlock], metadata);
+    if (body) {
+      const tryResult = await workingBlock.try(body, cancellationToken);
+      if (tryResult.status) {
+        workingBlock.accept();
+        proof.merge(workingBlock, true);
+      } else {
+        workingBlock.repair();
+      }
+      
+    }
+    return proof;
   }
 
   static fromTokens(uri: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {  
@@ -46,165 +51,151 @@ export class ProofMeta {
       .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
       .map(token => token.value)
       .join(' ');
-    
+      
     const name = tokens
       .filter(token => token.scopes.includes(Name.PROOF_NAME))
       .map(token => token.value)
       .join(' ');
-    
+      
     const type = tokens
       .filter(token => token.scopes.includes(Name.PROOF_TYPE))
       .map(token => token.value)
       .join(' ');
-    
+      
     const bodyTokens = tokens
       .filter(token => token.scopes.includes(Name.PROOF_BODY));
-    
-    const location = new vscode.Range(
+      
+    const editorLocation = new vscode.Range(
       tokens[0].range.start.line, 
       tokens[0].range.start.character, 
       tokens[tokens.length - 1].range.end.line, 
       tokens[tokens.length - 1].range.end.character);
-      
-    return ProofMeta.init(uri, keyword, name, type, location, bodyTokens, cancellationToken);
+        
+    return Proof.init(name, type, { keyword, uri, editorLocation }, bodyTokens, cancellationToken);
   }
 
-  async insert(tokens: Token[], at: number, execute: boolean, cancellationToken?: vscode.CancellationToken) {
-    const openSubProofs = this.body.openSubProofs();
-    if (openSubProofs.length > at)
-      return await openSubProofs[at].insert(tokens, execute, cancellationToken);
-    else throw Error('Index too large');
-  }
+  private merge(workingBlock: WorkingBlock, templatize: boolean) {
+    const newElements = workingBlock.body
+      .slice(1)
+      .map(element => {
+        const prePetState = workingBlock.body[workingBlock.body.indexOf(element) - 1].petState;
+        return templatize && element.token.scopes.includes(Name.ADMIT) && prePetState ?
+          new WorkingBlock(prePetState) : element.token;
+      });
 
-  async goals(cancellationToken?: vscode.CancellationToken) {
-    const goals = await Promise.all(this.body
-      .openSubProofs()
-      .map(openSubProof => openSubProof.goals(cancellationToken)));
-    return goals.flat();
+    this.body.splice(this.body.indexOf(workingBlock), 1, ...newElements);
   }
 
   async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
-    const goals = await this.goals();
-    const oracle = oracles[0];
-
-    for (const [, goal] of goals.entries()) {
-      let res: { status: boolean, message?: string } = { status: false };
-      let queriesNum = 0;
-      let answers: string[] = [];
-      let answer;
-      let tactics: Token[] = [];
-      const params: OracleParams = {
-        errorHistory: []
-      };
-
-      while (!res.status && (answers.length > 0 || queriesNum < MAX_ATTEMPT)) {
-        if (answers.length === 0) {
-          answers.push(...await oracle.query(goal, params, cancellationToken));
-          queriesNum++;
-        }
-        if (answer = answers.pop()) {
-          tactics = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-          res = await this.insert(tactics, 0, true, cancellationToken);
-          if (!res.status)
-            params.errorHistory?.push({ tactics: tactics, message: res.message });
-        }
-      }
-
-      if (!res.status) 
-        this.insert(tactics, 0, false, cancellationToken);
+    const workingBlocks = this.body.filter(element => element instanceof WorkingBlock);
+    return Promise.all(workingBlocks.map(workingBlock => {
+      return workingBlock.autocomplete(oracles, cancellationToken);
     }
-
-    return this;
-  }
-
-  deepcopy() {
-    return new ProofMeta(this.uri, this.keyword, this.name, this.type, this.body.deepcopy(), this.editorLocation);
-  }
-
-  toString() {
-    return `${this.keyword} ${this.name}: ${this.type}. Proof. ${this.body.toString()} Qed.`;
+    ));
   }
 }
 
-class ProofBlock {
-  private state: PetState | PetState.Default;
-  private open: boolean = true;
-  private elements: Element[] = [];
-
-  constructor(state: PetState | PetState.Default.INCONSISTENT) {
-    this.state = state;
+namespace WorkingBlock {
+  export interface Element {
+    token: Token, 
+    petState?: PetState, // Petanque state after the execution of the token
+    accepted: boolean
   }
 
-  openSubProofs(): ProofBlock[] {
-    const openSubProofs = this.elements.flatMap(element =>
-      element instanceof ProofBlock ? element.openSubProofs() : []);
+  export type TryResult = 
+    { status: true } | 
+    { status: false, error: { at: number, message: string }}
+}
 
-    if (this.open) openSubProofs.push(this);
-    
-    return openSubProofs;
+export class WorkingBlock {
+  readonly body: WorkingBlock.Element[];
+
+  constructor(startingState: PetState) {
+    this.body = [{ token: { value: '', scopes: [Name.IGNORE], range: new vscode.Range(0,0,0,0) }, 
+      petState: startingState, accepted: true }];
   }
 
-  async insert(tokens: Token[], execute: boolean, cancellationToken?: vscode.CancellationToken) {
-    if (!this.open) throw new Error('Proof completed');
+  async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
+    let result: WorkingBlock.TryResult = { status: true };
 
-    const baseLineIdx = tokens[0].range.start.line;
-    const newElements: Element[] = [];
-    let interState = this.state;
-    
-    for (const token of tokens) {
-      if (token.scopes.includes(Name.ADMIT))
-        newElements.push(new ProofBlock(interState));
-      else
-        newElements.push({ ...token, range: new vscode.Range(token.range.start.translate(-baseLineIdx), token.range.end.translate(-baseLineIdx)) });
-    
-      if (execute && token.scopes.includes(Name.EXECUTABLE)) {
-        if (interState === PetState.Default.INCONSISTENT)
-          throw new Error('Cannot execute in an inconsistent state');
-        else try {
-          interState = await CoqLSPClient
-            .get()
-            .sendRequest(Request.Petanque.run, { st: interState.st, tac: token.value.trim() }, cancellationToken);
-        } catch (error) {
-          const _error = error as Error;
-          let parsedMessage;
-          if ((parsedMessage = _error.message.match(/Coq: (?<message>[\s\S]*)/m)) && parsedMessage.groups)
-            return { status: false, message: parsedMessage.groups['message'] };
-          else
-            return { status: false, message: _error.message };
+    for (const [idx, token] of tokens.entries()) {
+      let element: WorkingBlock.Element = { token: token, accepted: false };
+     
+      if (token.scopes.includes(Name.EXECUTABLE)) {
+        const execPetState = this.body.at(-1)?.petState;
+        if (execPetState) {
+          try {
+            element.petState = await CoqLSPClient.get()
+              .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value.trim() }, cancellationToken);
+          } catch (error) {
+            const parsedMessage = (error as Error).message.match(/Coq: (?<message>[\s\S]*)/m);
+            if (parsedMessage && parsedMessage.groups)
+              result = { status: false, error: { at: idx, message: parsedMessage.groups['message'] }};
+          }
         }
+      } else {
+        element.petState = this.body.at(-1)?.petState;
       }
+
+      this.body.push(element);
     }
 
-    this.elements.push(...newElements);
-    this.state = interState;
+    return result;
+  }
 
-    const goals = await this.goals(cancellationToken);
-    if (goals.length === 0) this.open = false;
+  accept() {
+    this.body.forEach(element => element.accepted = true);
+  }
 
-    return { status: true };
+  reject() {
+    this.body.splice(
+      this.body.findIndex(element => !element.accepted));
+  }
+
+  repair() {
+    throw new Error('To be implemented!');
+  }
+
+  async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
+    const MAX_ATTEMPTS = 3;
+    const answers = [];
+    const oracleParams: OracleParams = {
+      errorHistory: []
+    };
+    let attempts = 0;
+    let goals;
+
+    while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
+      if (answers.length === 0) {
+        answers.push(...await oracles[0].query(goals[0], oracleParams, cancellationToken));
+        attempts++;
+      }
+      
+      const answer = answers.pop();
+      if (answer) {
+        const tokens = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
+        const tryResult = await this.try(tokens, cancellationToken);
+        if (!tryResult.status)
+          oracleParams.errorHistory?.push({ tactics: tokens, message: tryResult.error.message });
+        if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
+          this.accept();
+        else
+          this.reject();
+      }
+    }
   }
 
   async goals(cancellationToken?: vscode.CancellationToken) {
-    if (this.state === PetState.Default.INCONSISTENT)
-      throw new Error('Cannot get goals of an inconsistent state');
-
-    const goals = await CoqLSPClient
-      .get()
-      .sendRequest(Request.Petanque.goals, { st: this.state.st }, cancellationToken);
-    return goals.goals;
-  }
-
-  deepcopy(): ProofBlock {
-    const copy = new ProofBlock(this.state);
-    copy.open = this.open;
-    copy.elements = this.elements.map(element => 
-      element instanceof ProofBlock ? element.deepcopy() : element);
-    return copy;
+    const lastPetState = this.body.at(-1)?.petState;
+    if (lastPetState) {
+      const goals = await CoqLSPClient.get()
+        .sendRequest(Request.Petanque.goals, { st: lastPetState.st }, cancellationToken);
+      return goals.goals;
+    } else return [];
   }
 
   toString(): string {
-    return this.elements
-      .map(element => element instanceof ProofBlock ? element.toString() : element.value)
-      .join(' ');
+    return this.body.reduce((str, element) => 
+      element.token.scopes.includes(Name.IGNORE) ? str : str + ' ' + element.token.value, '');
   }
 }
