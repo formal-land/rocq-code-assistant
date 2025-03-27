@@ -28,14 +28,12 @@ export class Proof {
       if (tryResult.status) {
         workingBlock.accept();
         proof.merge(workingBlock);
-      } else {
-        workingBlock.repair();
-      }
+      } else workingBlock.repair();
     }
     return proof;
   }
 
-  static fromTokens(uri: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {  
+  static fromTokens(uri: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {
     const keyword = tokens
       .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
       .map(token => token.value)
@@ -69,9 +67,11 @@ export class Proof {
 
   async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
     const workingBlocks = this.body.filter(element => element instanceof Proof.WorkingBlock);
+    
     /* await Promise.all(workingBlocks.map(workingBlock => {
       return workingBlock.autocomplete(oracles, cancellationToken);
     })); */
+    
     for (const workingBlock of workingBlocks) {
       await workingBlock.autocomplete(oracles, cancellationToken);
     }
@@ -207,6 +207,8 @@ export namespace Proof {
     async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
       let result: WorkingBlock.TryResult = { status: true };
 
+      tokens = WorkingBlock.normalize(tokens);
+
       for (const [idx, token] of tokens.entries()) {            
         const execPetState = this.elements.at(-1)?.petState;
         let newPetState;
@@ -229,6 +231,10 @@ export namespace Proof {
       }
   
       return result;
+    }
+
+    pendings() {
+      return this.elements.filter(element => !element.accepted);
     }
   
     /**
@@ -258,6 +264,35 @@ export namespace Proof {
     templatize() {
       return this.elements.flatMap(element => element.templatize());
     }
+
+    /**
+   * Executes a series of useful standard _normalization_ procedures on a list of tokens.
+   * @param tokens the list of tokens to be _normalized_.
+   * @returns a new list of _normalized_ tokens.
+   */
+    private static normalize(tokens: Token[]): Token[] {
+      // 1. Removing spaces and empty tokens
+      tokens = tokens
+        .map(token => ({ ...token, value: token.value.trim() }))
+        .filter(token => token.value !== '');
+
+      // 2. Adding curly braces around every admit that is not already put inside curly braces
+      const admitIdxs = tokens
+        .filter(token => token.scopes.includes(Name.ADMIT))
+        .map(token => tokens.indexOf(token));
+
+      tokens = tokens.flatMap((token, idx) => {
+        const prevToken = tokens.at(idx - 1);
+        const succToken = tokens.at(idx + 1);
+        if (admitIdxs.includes(idx) && prevToken && succToken && 
+            !(prevToken.scopes.includes(Name.FOCUSING_CONSTRUCT) && prevToken.value === '{') &&
+            !(succToken.scopes.includes(Name.FOCUSING_CONSTRUCT) && succToken.value === '}')) {
+          return [Token.Standard.FOCUSING_CONSTRUCT_LEFT_CURLY, token, Token.Standard.FOCUSING_CONSTRUCT_RIGHT_CURLY];
+        } else return [token];
+      });
+
+      return tokens;
+    }
   
     /**
      * @param oracles List of oracles to be called.
@@ -283,7 +318,10 @@ export namespace Proof {
           const tokens = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
           const tryResult = await this.try(tokens, cancellationToken);
           if (!tryResult.status)
-            oracleParams.errorHistory?.push({ tactics: tokens, message: tryResult.error.message });
+            oracleParams.errorHistory?.push({ 
+              tactics: this.pendings().flatMap(element => element.tokens()),
+              at: tryResult.error.at, 
+              message: tryResult.error.message });
           if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
             this.accept();
           else

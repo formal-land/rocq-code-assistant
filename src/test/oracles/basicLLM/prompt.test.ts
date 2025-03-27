@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
 import * as assert from 'assert';
 import * as utils from '../../../utils';
 import * as prompt from '../../../oracles/basic-LLM/prompt';
+import { Token } from '../../../syntax/tokenizer';
 
 suite('Extension Test Suite', () => {
   test('Complete', () => {
@@ -20,10 +20,18 @@ suite('Extension Test Suite', () => {
     const params = {
       errorHistory: [{
         tactics: [
-          { value: 'insert a at H.', scopes: [], range: new vscode.Range(0,0,0,0) },
-          { value: 'split; auto.', scopes: [], range: new vscode.Range(0,0,0,0) },
-          { value: 'auto.', scopes: [], range: new vscode.Range(0,0,0,0) }
+          Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic.'),
+          Token.Standard.FOCUSING_CONSTRUCT_DASH,
+          Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic1; tactic2.'),
+          Token.Standard.FOCUSING_CONSTRUCT_CROSS,
+          Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic.'),
+          Token.Standard.FOCUSING_CONSTRUCT_CROSS,
+          Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic.'),
+          Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic.'),
+          Token.Standard.FOCUSING_CONSTRUCT_DASH,
+          Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic.')
         ],
+        at: 2,
         message:
 `
 Coq: In environment

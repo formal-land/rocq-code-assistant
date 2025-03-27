@@ -7,5 +7,8 @@ export interface Oracle {
 }
 
 export interface OracleParams {
-  errorHistory?: { tactics: Token[], message?: string }[]
+  errorHistory?: { 
+    tactics: Token[],
+    at: number,
+    message?: string }[]
 }

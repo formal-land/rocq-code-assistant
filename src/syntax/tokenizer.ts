@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as vsctm from 'vscode-textmate';
 import * as oniguruma from 'vscode-oniguruma';
-import { Scope } from './scope';
+import { Name, Scope } from './scope';
 
 const NEW_LINE_REGEX = /\r?\n|\r|\n/g;
 
@@ -12,6 +12,46 @@ export interface Token {
   value: string,
   scopes: string[],
   range: vscode.Range
+}
+
+export namespace Token.Standard {
+  export const FOCUSING_CONSTRUCT_LEFT_CURLY: Token = {
+    value: '{',
+    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+    range: new vscode.Range(0, 0, 0, 0)
+  };
+
+  export const FOCUSING_CONSTRUCT_RIGHT_CURLY: Token = {
+    value: '}',
+    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+    range: new vscode.Range(0, 0, 0, 0)
+  };
+
+  export const FOCUSING_CONSTRUCT_DASH: Token = {
+    value: '-',
+    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+    range: new vscode.Range(0, 0, 0, 0)
+  };
+
+  export const FOCUSING_CONSTRUCT_CROSS: Token = {
+    value: '+',
+    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+    range: new vscode.Range(0, 0, 0, 0)
+  };
+
+  export const FOCUSING_CONSTRUCT_STAR: Token = {
+    value: '*',
+    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+    range: new vscode.Range(0, 0, 0, 0)
+  };
+
+  export function FOCUSING_CONSTRUCT_TACTIC(value: string): Token {
+    return {
+      value: value,
+      scopes: [Name.PROOF, Name.PROOF_BODY, Name.TACTIC, Name.EXECUTABLE],
+      range: new vscode.Range(0, 0, 0, 0)
+    };
+  }
 }
 
 export class Tokenizer {
