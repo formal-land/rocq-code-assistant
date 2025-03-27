@@ -42,15 +42,14 @@ export async function activate(context: vscode.ExtensionContext) {
     async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: any, proofName?: string) => {
       while (!selectedModel) await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
 
-      const { proof, success } = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
+      const { proof, ppProof, success } = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
         (progress, cancellationToken) => solveCallback(textEditor, edit, resource, proofName, cancellationToken));
-
+      
       if (!success) {
         const selection = await vscode.window.showInformationMessage('Rocq code assistant couldn\'t find a proof. Do you want to show it anyway?', 'Yes', 'No');
         if (selection === 'No') return;
       }
 
-      const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
       textEditor.edit(edit => edit.replace(proof.metadata.editorLocation, ppProof));
     }
   );
@@ -90,8 +89,9 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
   }
 
   const proof = await Proof.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
-  const success =await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
-  return { proof, success };
+  const success = await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
+  const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
+  return { proof, ppProof, success };
 }
 
 async function selectModelCallback(modelId?: string) {

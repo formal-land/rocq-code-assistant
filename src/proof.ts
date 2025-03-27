@@ -68,13 +68,10 @@ export class Proof {
   async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
     const workingBlocks = this.body.filter(element => element instanceof Proof.WorkingBlock);
     
-    /* await Promise.all(workingBlocks.map(workingBlock => {
-      return workingBlock.autocomplete(oracles, cancellationToken);
-    })); */
-    
-    for (const workingBlock of workingBlocks) {
+    await Promise.all(workingBlocks.map(async workingBlock => {
       await workingBlock.autocomplete(oracles, cancellationToken);
-    }
+      this.merge(workingBlock);
+    }));
 
     if (!this.body.find(element => !element.petState)) {
       const lastElement = this.body.at(-1);
@@ -171,6 +168,10 @@ export namespace Proof {
     tokens() {
       return [this.token];
     }
+
+    toString() {
+      return this.token.value;
+    }
   }
 
   /**
@@ -266,10 +267,10 @@ export namespace Proof {
     }
 
     /**
-   * Executes a series of useful standard _normalization_ procedures on a list of tokens.
-   * @param tokens the list of tokens to be _normalized_.
-   * @returns a new list of _normalized_ tokens.
-   */
+     * Executes a series of useful standard _normalization_ procedures on a list of tokens.
+     * @param tokens the list of tokens to be _normalized_.
+     * @returns a new list of _normalized_ tokens.
+     */
     private static normalize(tokens: Token[]): Token[] {
       // 1. Removing spaces and empty tokens
       tokens = tokens
@@ -346,7 +347,7 @@ export namespace Proof {
     /**
      * @returns A string representation of this block.
      */
-    toString(): string {
+    toString() {
       return this.elements
         .flatMap(element => element.tokens())
         .map(token => token.value)
@@ -426,6 +427,8 @@ export namespace Proof {
       }
 
       tokens() { return [ this.token ]; }
+
+      toString() { return this.token.value; }
     }
 
     /**

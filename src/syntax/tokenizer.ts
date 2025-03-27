@@ -14,43 +14,45 @@ export interface Token {
   range: vscode.Range
 }
 
-export namespace Token.Standard {
-  export const FOCUSING_CONSTRUCT_LEFT_CURLY: Token = {
-    value: '{',
-    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
-    range: new vscode.Range(0, 0, 0, 0)
-  };
-
-  export const FOCUSING_CONSTRUCT_RIGHT_CURLY: Token = {
-    value: '}',
-    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
-    range: new vscode.Range(0, 0, 0, 0)
-  };
-
-  export const FOCUSING_CONSTRUCT_DASH: Token = {
-    value: '-',
-    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
-    range: new vscode.Range(0, 0, 0, 0)
-  };
-
-  export const FOCUSING_CONSTRUCT_CROSS: Token = {
-    value: '+',
-    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
-    range: new vscode.Range(0, 0, 0, 0)
-  };
-
-  export const FOCUSING_CONSTRUCT_STAR: Token = {
-    value: '*',
-    scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
-    range: new vscode.Range(0, 0, 0, 0)
-  };
-
-  export function FOCUSING_CONSTRUCT_TACTIC(value: string): Token {
-    return {
-      value: value,
-      scopes: [Name.PROOF, Name.PROOF_BODY, Name.TACTIC, Name.EXECUTABLE],
+export namespace Token {
+  export namespace Standard {
+    export const FOCUSING_CONSTRUCT_LEFT_CURLY: Token = {
+      value: '{',
+      scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
       range: new vscode.Range(0, 0, 0, 0)
     };
+
+    export const FOCUSING_CONSTRUCT_RIGHT_CURLY: Token = {
+      value: '}',
+      scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+      range: new vscode.Range(0, 0, 0, 0)
+    };
+
+    export const FOCUSING_CONSTRUCT_DASH: Token = {
+      value: '-',
+      scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+      range: new vscode.Range(0, 0, 0, 0)
+    };
+
+    export const FOCUSING_CONSTRUCT_CROSS: Token = {
+      value: '+',
+      scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+      range: new vscode.Range(0, 0, 0, 0)
+    };
+
+    export const FOCUSING_CONSTRUCT_STAR: Token = {
+      value: '*',
+      scopes: [Name.PROOF, Name.PROOF_BODY, Name.FOCUSING_CONSTRUCT, Name.EXECUTABLE],
+      range: new vscode.Range(0, 0, 0, 0)
+    };
+
+    export function FOCUSING_CONSTRUCT_TACTIC(value: string): Token {
+      return {
+        value: value,
+        scopes: [Name.PROOF, Name.PROOF_BODY, Name.TACTIC, Name.EXECUTABLE],
+        range: new vscode.Range(0, 0, 0, 0)
+      };
+    }
   }
 }
 

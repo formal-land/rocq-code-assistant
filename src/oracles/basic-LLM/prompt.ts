@@ -9,8 +9,8 @@ export function render(goal: Goal<PpString>, params?: OracleParams) {
   const introPart = LanguageModelChatMessage.User(`You are a Coq expert.
 You will be provided with a description of a theorem and your task is to solve it.
 Try to keep things as simple as possible.
-Return two alternative solutions consisting of a sequence of valid Coq tactics to solve the goal.
-Put each solution in a Markdown code block that begins with \`\`\`coq and ends with \`\`\`.`);
+Return a solution consisting of a sequence of valid Coq tactics to solve the goal.
+Put the solution in a Markdown code block that begins with \`\`\`coq and ends with \`\`\`.`);
 
   const hypotesisPart = goal.hyps
     .flatMap(block => 
@@ -29,7 +29,7 @@ ${hypotesisPart}`);
 \t- tactics: ${
   tactics.reduce((str, tactic, idx) =>
     str + 
-    (idx === at ? `<${tactic.value}>` : tactic.value) + 
+    (idx === at ? `<<< ${tactic.value} >>>` : tactic.value) + 
     (tactic.scopes.includes(Name.FOCUSING_CONSTRUCT) ? ' ' : '\n\t\t'), '\n\t\t')
 }
 \t- error: ${ message?.trim().replaceAll('\n', `\n\t${' '.repeat('- error: '.length)}`) }`)
@@ -37,8 +37,8 @@ ${hypotesisPart}`);
 
   const errorHistoryPart = LanguageModelChatMessage.User(`These solutions have already been \
 tried and they do not work. Please, avoid them. 
-For each of them, the tactic where it failed is put between angle brackets \`< >\` and a description \
-of the error is provided.
+For each of them, the tactic where it failed is put between triple angle brackets \`<<< >>>\` and a \ 
+description of the error is provided.
 ${errorHistoryListPart}`);
 
   messages.push(introPart);
