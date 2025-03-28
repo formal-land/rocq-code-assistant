@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as tiktoken from 'tiktoken';
 import OpenAI from 'openai';
+import { ITokenizer } from '@vscode/prompt-tsx';
+import { AnyTokenizer } from '@vscode/prompt-tsx/dist/base/tokenizer/tokenizer';
 import { ChatCompletionAssistantMessageParam, ChatCompletionUserMessageParam, ChatCompletionContentPartText } from 'openai/resources/index.mjs';
 import { ModelProviderMetadata } from './types';
 
@@ -32,6 +34,13 @@ export function create(model: string, metadata: ModelProviderMetadata, apiKeyVar
     sendRequest, 
     countTokens: (text: string | vscode.LanguageModelChatMessage, token?: vscode.CancellationToken) => countTokens(model, text, token)
   };
+}
+
+export function tokenizer(model: string): ITokenizer {
+  return new AnyTokenizer(
+    (text: string | vscode.LanguageModelChatMessage, token?: vscode.CancellationToken) => countTokens(model, text, token), 
+    'vscode'
+  );
 }
 
 async function countTokens(model: string, text: string | vscode.LanguageModelChatMessage, token?: vscode.CancellationToken) {

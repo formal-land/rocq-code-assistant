@@ -132,6 +132,7 @@
     "yaml": "^2.7.0"
   },
   "dependencies": {
+    "@vscode/prompt-tsx": "^0.3.0-alpha.22",
     "ollama": "^0.5.12",
     "openai": "^4.85.1",
     "tiktoken": "^1.0.20",
