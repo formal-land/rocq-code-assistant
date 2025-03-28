@@ -18,18 +18,16 @@ export class Proof {
     this.metadata = metadata;
   }
 
-  private static async init(name: string, type: string, metadata: Proof.Metadata, body?: Token[], cancellationToken?: vscode.CancellationToken) {
+  private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
       .sendRequest(Request.Petanque.start, { uri: metadata.uri, thm: name, pre_commands: null }, cancellationToken);
     const workingBlock = new Proof.WorkingBlock(startingState, startingState);
     const proof = new Proof(name, type, [workingBlock], metadata);
-    if (body) {
-      const tryResult = await workingBlock.try(body, cancellationToken);
-      if (tryResult.status) {
-        workingBlock.accept();
-        proof.merge(workingBlock);
-      } else workingBlock.repair();
-    }
+    const tryResult = await workingBlock.try(body, cancellationToken);
+    if (tryResult.status) {
+      workingBlock.accept();
+      proof.merge(workingBlock);
+    } else workingBlock.repair();
     return proof;
   }
 
@@ -206,7 +204,7 @@ export namespace Proof {
      * @returns 
      */
     async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
-      let result: WorkingBlock.TryResult = { status: true };
+      let result = WorkingBlock.TryResult.success();
 
       tokens = WorkingBlock.normalize(tokens);
 
@@ -219,9 +217,7 @@ export namespace Proof {
               newPetState = await CoqLSPClient.get()
                 .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value }, cancellationToken);
             } catch (error) {
-              const parsedMessage = (error as Error).message.match(/Coq: (?<message>[\s\S]*)/m);
-              if (parsedMessage && parsedMessage.groups)
-                result = { status: false, error: { at: idx, message: parsedMessage.groups['message'] }};
+              result = WorkingBlock.TryResult.failure(error as Error, idx);
             }
           }
         } else {
@@ -460,5 +456,19 @@ export namespace Proof {
     export type TryResult = 
       { status: true } | 
       { status: false, error: { at: number, message: string }}
+
+    export namespace TryResult {
+      export function success(): TryResult {
+        return { status: true };
+      }
+
+      export function failure(error: Error, at: number): TryResult {
+        const parsedMessage = error.message.match(/Coq: (?<message>[\s\S]*)/m);
+        if (parsedMessage && parsedMessage.groups)
+          return { status: false, error: { at: at, message: parsedMessage.groups['message'] }};
+        else
+          return { status: false, error: { at: at, message: error.message }};
+      }
+    }
   }
 }
