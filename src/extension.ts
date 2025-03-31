@@ -19,7 +19,7 @@ export namespace Commands {
 let coqLSPClient: CoqLSPClient;
 let coqTokenizer: Tokenizer;
 let selectedModel: vscode.LanguageModelChat | undefined;
-let registeredModels: vscode.LanguageModelChat[] = [];
+let registeredCustomModels: vscode.LanguageModelChat[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
   coqLSPClient = CoqLSPClient.get();
@@ -95,7 +95,7 @@ async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEdi
 }
 
 async function selectModelCallback(modelId?: string) {
-  function _modelQuickPickItemDetail(model: vscode.LanguageModelChat) {
+  function modelQuickPickItemDetail(model: vscode.LanguageModelChat) {
     const details = [];
   
     if (model.family) details.push(`family: ${model.family}`);
@@ -105,21 +105,24 @@ async function selectModelCallback(modelId?: string) {
     return details.join(', ');
   }
 
-  const quickPickItems = registeredModels
+  const models = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, 
+    async () => registeredCustomModels.concat(await vscode.lm.selectChatModels()));
+  
+  const quickPickItems = models
     .toSorted((model1, model2) => {
       if (model1 === selectedModel) return -1;
       if (model2 === selectedModel) return 1;
       else return 0; })
     .map(model => ({
       id: model.id,
-      label: `$(sparkle) ${model.name}`,
+      label: model.vendor === 'copilot' ? `$(copilot) ${model.name}` : `$(sparkle) ${model.name}`,
       description: model === selectedModel ? 'Selected' : undefined,
-      detail: _modelQuickPickItemDetail(model) }));
+      detail: modelQuickPickItemDetail(model) }));
 
   if (!modelId)
     modelId = (await vscode.window.showQuickPick(quickPickItems))?.id;
 
-  const pickedModel = registeredModels.find(model => model.id === modelId);
+  const pickedModel = models.find(model => model.id === modelId);
   if (pickedModel)
     selectedModel = pickedModel;
 
@@ -127,12 +130,12 @@ async function selectModelCallback(modelId?: string) {
 }
 
 async function updateLanguageModels() {
-  updateOllamaLanguageModel();
-  updateOpenAILanguageModel();
+  updateCustomOllamaLanguageModel();
+  updateCustomOpenAILanguageModel();
 }
 
-async function updateOllamaLanguageModel() {
-  registeredModels = registeredModels.filter(model => model.vendor !== 'Ollama');
+async function updateCustomOllamaLanguageModel() {
+  registeredCustomModels = registeredCustomModels.filter(model => model.vendor !== 'Ollama');
 
   const isOllamaEnabled = utils.getConfBoolean('provider.ollama.enabled', false);
   if (!isOllamaEnabled) return;
@@ -145,41 +148,41 @@ async function updateOllamaLanguageModel() {
     id: `rocq-coding-assistant:${utils.getConfString('provider.ollama.model.name', '')}`,
     name: utils.getConfString('provider.ollama.model.name', ''),
     vendor: 'Ollama',
-    family: '',
+    family: utils.getConfString('provider.ollama.model.name', ''),
     version: '',
     maxInputTokens: Infinity,
     maxOutputTokens: Infinity
   };
 
   const ollamaModelProvider = await ollama.create(modelMetadata.name, modelMetadata, host);
-  registeredModels.push(ollamaModelProvider);
+  registeredCustomModels.push(ollamaModelProvider);
 
-  if (registeredModels.length === 1)
-    selectedModel = registeredModels[0];
+  if (registeredCustomModels.concat(await vscode.lm.selectChatModels()).length === 1)
+    selectedModel = registeredCustomModels[0];
 }
 
-async function updateOpenAILanguageModel() {
-  registeredModels = registeredModels.filter(model => model.vendor !== 'OpenAI');
+async function updateCustomOpenAILanguageModel() {
+  registeredCustomModels = registeredCustomModels.filter(model => model.vendor !== 'OpenAI');
 
   const isOpenAIEnabled = utils.getConfBoolean('provider.openai.enabled', false);
   if (!isOpenAIEnabled) return;
 
   const modelMetadata = {
-    id: `rocq-coding-assistant:${utils.getConfString('provider.openai.model.name', 'o1-mini')}`,
-    name: utils.getConfString('provider.openai.model.name', 'o1-mini'),
+    id: `rocq-coding-assistant:${utils.getConfString('provider.openai.model.name', '')}`,
+    name: utils.getConfString('provider.openai.model.name', ''),
     vendor: 'OpenAI',
-    family: '',
+    family: utils.getConfString('provider.openai.model.name', ''),
     version: '',
-    maxInputTokens: utils.getConfNumber('provider.openai.model.context-widows', 200000),
-    maxOutputTokens: utils.getConfNumber('provider.openai.model.max-output-tokens', 100000)
+    maxInputTokens: utils.getConfNumber('provider.openai.model.context-widows', Infinity),
+    maxOutputTokens: utils.getConfNumber('provider.openai.model.max-output-tokens', Infinity)
   };
 
   const openAIModelProvider = openAI.create(
     modelMetadata.name, modelMetadata, utils.getConfString('provider.openai.api-key-var-name', 'OPENAI_API_KEY'));
-  registeredModels.push(openAIModelProvider);
+  registeredCustomModels.push(openAIModelProvider);
 
-  if (registeredModels.length === 1)
-    selectedModel = registeredModels[0];
+  if (registeredCustomModels.concat(await vscode.lm.selectChatModels()).length === 1)
+    selectedModel = registeredCustomModels[0];
 }
 
 function didChangeConfigurationCallback(event: vscode.ConfigurationChangeEvent) {
@@ -187,7 +190,7 @@ function didChangeConfigurationCallback(event: vscode.ConfigurationChangeEvent) 
     return;
 
   if (event.affectsConfiguration('rocq-coding-assistant.provider.ollama'))
-    updateOllamaLanguageModel();
+    updateCustomOllamaLanguageModel();
   if (event.affectsConfiguration('rocq-coding-assistant.provider.openai'))
-    updateOpenAILanguageModel();
+    updateCustomOpenAILanguageModel();
 }
