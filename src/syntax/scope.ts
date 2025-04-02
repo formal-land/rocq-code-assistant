@@ -1,9 +1,9 @@
-export enum Scope {
+export const enum Scope {
   PROOF = 'source.coq.proof',
   PROOF_BODY = 'source.coq.proof.body'
 }
 
-export enum Name {
+export const enum Name {
   PROOF = 'meta.proof.coq',
   PROOF_HEAD = 'meta.proof.head.coq',
   PROOF_BODY = 'meta.proof.body.coq',

@@ -11,8 +11,8 @@ interface Test {
 
 const DATASET_DESCRIPTION_PATH = './dataset/miniF2F.yaml';
 
-suite('miniF2F benchmark', () => {
-  suiteSetup(async () => {
+describe('miniF2F benchmark', () => {
+  before(async function () {
     const conf = vscode.workspace.getConfiguration('rocq-coding-assistant.provider.openai');
     await conf.update('enabled', 'true', vscode.ConfigurationTarget.Workspace);
     await conf.update('model.name', 'o1-mini', vscode.ConfigurationTarget.Workspace);
@@ -33,19 +33,19 @@ suite('miniF2F benchmark', () => {
     .flatMap(({ file, theorems }) =>
       theorems.map(theorem => ({ file: file, theorem: theorem })))
     .forEach(({ file, theorem }) => 
-      test(`Test ${file}:${theorem}`, () => testTheorem(file, theorem)));
+      it(`Test ${file}:${theorem}`, async function () {  
+        if (!vscode.workspace.workspaceFolders) {
+          assert.fail();
+        } else {
+          const fileUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, '/dataset', file);
+          const fileDocument = await vscode.workspace.openTextDocument(fileUri);
+          vscode.window.showTextDocument(fileDocument);
+      
+          const retSelectModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4o-2024-11-20');
+          assert.strictEqual(retSelectModel, 0);
+      
+          const retSolve = await vscode.commands.executeCommand(Commands.SOLVE, fileUri, theorem);
+          assert.strictEqual(retSolve, 0);
+        }
+      }));
 });
-
-async function testTheorem(file: string, proofName: string) {
-  if (!vscode.workspace.workspaceFolders) {
-    assert.fail();
-  } else {
-    const fileUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, '/dataset', file);
-    const fileDocument = await vscode.workspace.openTextDocument(fileUri);
-    vscode.window.showTextDocument(fileDocument);
-
-    const ret = await vscode.commands.executeCommand(Commands.HELLO_WORLD);
-
-    assert.strictEqual(ret, 0);
-  }
-}

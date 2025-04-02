@@ -86,7 +86,7 @@ export class Tokenizer {
       onigLib: vscodeOnigurumaLib,
       loadGrammar: async (scopeName) => {
         const grammar = grammars.find(gramRef => gramRef.scopeName === scopeName);
-        if (!grammar) return Promise.reject(`Unknown scope ${scopeName}`);
+        if (!grammar) throw new Error(`Unknown scope ${scopeName}`);
 
         const data = await fsp.readFile(grammar.path);
         return vsctm.parseRawGrammar(data.toString(), grammar.path);

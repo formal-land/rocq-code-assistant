@@ -21,8 +21,9 @@ export default defineConfig(
       files: 'out/test/benchmarks/miniF2F/miniF2F.test.js',
       workspaceFolder: './src/test/benchmarks/miniF2F',
       mocha: {
-        timeout: 0
-      }
+        timeout: 0,
+        ui: 'bdd'
+      },
     }
   ]
 );

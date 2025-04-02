@@ -16,15 +16,10 @@ export namespace Commands {
   export const SOLVE = 'rocq-coding-assistant.solve';
 }
 
-let coqLSPClient: CoqLSPClient;
-let coqTokenizer: Tokenizer;
 let selectedModel: vscode.LanguageModelChat | undefined;
 let registeredCustomModels: vscode.LanguageModelChat[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
-  coqLSPClient = CoqLSPClient.get();
-  coqTokenizer = Tokenizer.get();
-
   updateLanguageModels();
 
   const regDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration(didChangeConfigurationCallback);
@@ -39,24 +34,29 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(regSelectModel);
 
   const regSolve = vscode.commands.registerTextEditorCommand(Commands.SOLVE,
-    async (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: any, proofName?: string) => {
+    async (textEditor?: vscode.TextEditor, edit?: vscode.TextEditorEdit, resource?: any, proofName?: string) => {
       while (!selectedModel) await vscode.commands.executeCommand('rocq-coding-assistant.select-model');
 
       const { proof, ppProof, success } = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Solving theorem...', cancellable: true }, 
         (progress, cancellationToken) => solveCallback(textEditor, edit, resource, proofName, cancellationToken));
-      
+
       if (!success) {
         const selection = await vscode.window.showInformationMessage('Rocq code assistant couldn\'t find a proof. Do you want to show it anyway?', 'Yes', 'No');
-        if (selection === 'No') return;
+        if (selection === 'No') return false;
       }
+      
+      if (textEditor)
+        textEditor.edit(edit => edit.replace(proof.metadata.editorLocation, ppProof));
+      else return false;
 
-      textEditor.edit(edit => edit.replace(proof.metadata.editorLocation, ppProof));
+      return true;
     }
   );
   context.subscriptions.push(regSolve);
 }
 
 export function deactivate() {
+  const coqLSPClient = CoqLSPClient.get();
   if (coqLSPClient && coqLSPClient.isRunning()) 
     coqLSPClient.dispose();
 }
@@ -71,13 +71,13 @@ async function helloWorldCallback() {
   return 0;
 }
 
-async function solveCallback(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, resource?: vscode.Uri, proofName?: string, cancellationToken?: vscode.CancellationToken) {
+async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextEditorEdit, resource?: vscode.Uri, proofName?: string, cancellationToken?: vscode.CancellationToken) {
   if (!textEditor) {
     vscode.window.showErrorMessage('No active text editor available.');
     throw new Error('No active text editor available.');
   }
 
-  const tokenizedText = await coqTokenizer.tokenize(textEditor.document.getText(), Scope.PROOF);
+  const tokenizedText = await Tokenizer.get().tokenize(textEditor.document.getText(), Scope.PROOF);
 
   const proofTokens = proofName ?
     extractors.extractProofTokensFromName(proofName, tokenizedText) :
@@ -123,10 +123,10 @@ async function selectModelCallback(modelId?: string) {
     modelId = (await vscode.window.showQuickPick(quickPickItems))?.id;
 
   const pickedModel = models.find(model => model.id === modelId);
-  if (pickedModel)
+  if (pickedModel) {
     selectedModel = pickedModel;
-
-  return 0;
+    return 0;
+  } else return -1;
 }
 
 async function updateLanguageModels() {
