@@ -6,11 +6,17 @@ import { Name } from '../../syntax/scope';
 export function render(goal: Goal<PpString>, params?: OracleParams) {
   const messages: LanguageModelChatMessage[] = [];
 
-  const introPart = LanguageModelChatMessage.User(`You are a Coq expert.
-You will be provided with a description of a theorem and your task is to solve it.
-Try to keep things as simple as possible.
-Return a solution consisting of a sequence of valid Coq tactics to solve the goal.
-Put the solution in a Markdown code block that begins with \`\`\`coq and ends with \`\`\`.`);
+  const introPart = LanguageModelChatMessage.User(`
+You are an expert in Coq theorem proving.  
+You will be given a goal statement, and your task is to provide a complete proof using only Coq tactics.  
+
+**Instructions:**  
+- Keep the proof as simple and direct as possible.  
+- Output only the sequence of valid Coq tactics required to solve the goal.  
+- Do not include explanations, comments, imports, theorem definitions or any additional text.  
+- Ensure no steps are omitted.  
+- The output must be directly executable by Coq without any modifications.
+- Format the solution in a Markdown code block that starts with \`\`\`coq and ends with \`\`\`.`);
 
   const hypotesisPart = goal.hyps
     .flatMap(block => 
@@ -19,10 +25,10 @@ Put the solution in a Markdown code block that begins with \`\`\`coq and ends wi
     
   const goalPart = LanguageModelChatMessage.User(`The goal you have to prove is:
 
-${goal.ty}
+${goal.ty} ${hypotesisPart.length > 0 ? `
 
-You can use the following hypotesis:
-${hypotesisPart}`);
+You can use the following hypotesis: 
+${hypotesisPart}` : ''}`);
 
   const errorHistoryListPart = params?.errorHistory
     ?.map(({ tactics, at,  message }, idx) => `* Solution ${ idx + 1 }:

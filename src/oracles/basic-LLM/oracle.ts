@@ -14,7 +14,7 @@ export class BasicLLM implements Oracle {
   async query(goal: Goal<PpString>, params?: OracleParams, cancellationToken?: vscode.CancellationToken) {
     const messages = prompt.render(goal, params);
 
-    console.log(utils.languageModelChatMessagesToString(messages));
+    // console.log(utils.languageModelChatMessagesToString(messages));
 
     const rawResponse = await this.model.sendRequest(messages, {}, cancellationToken);
     
@@ -30,6 +30,10 @@ export class BasicLLM implements Oracle {
         const proofBlockRegexRes = coqCode.match(/Proof\.(?<tactics>[\s\S]*)Qed\./m)?.groups;
         if (proofBlockRegexRes) // Response in Proof. ... Qed. block
           coqCode = proofBlockRegexRes.tactics;
+
+        const qedRegexRes = coqCode.match(/(?<tactics>[\s\S]*)Qed\./m)?.groups;
+        if (qedRegexRes) // Response ends in Qed.
+          coqCode = qedRegexRes.tactics;
 
         response.push(coqCode);
       }
