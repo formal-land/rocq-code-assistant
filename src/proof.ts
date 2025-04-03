@@ -27,7 +27,11 @@ export class Proof {
     if (tryResult.status) {
       workingBlock.accept();
       proof.merge(workingBlock);
-    } else workingBlock.repair();
+    } else {
+      vscode.window.showErrorMessage('The proof contains some errors. Please, fix or admit them.');
+      throw new Error('Proof contains errors.');
+      // TODO: workingBlock.repair();
+    }
     return proof;
   }
 

@@ -123,10 +123,9 @@ async function selectModelCallback(modelId?: string) {
     modelId = (await vscode.window.showQuickPick(quickPickItems))?.id;
 
   const pickedModel = models.find(model => model.id === modelId);
-  if (pickedModel) {
-    selectedModel = pickedModel;
-    return 0;
-  } else return -1;
+  if (pickedModel) selectedModel = pickedModel;
+  
+  return pickedModel;
 }
 
 async function updateLanguageModels() {
