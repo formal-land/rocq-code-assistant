@@ -28,9 +28,10 @@ function extractProofTokensAroundToken(baseToken: Token, tokens: Token[]) {
     idx <= baseTokenIdx && 
     !token.scopes.includes(Name.PROOF)) + 1;
 
-  const lastProofTokenIdx = tokens.findIndex((token, idx) => 
+  let lastProofTokenIdx = tokens.findIndex((token, idx) => 
     idx >= baseTokenIdx && 
     !token.scopes.includes(Name.PROOF)) - 1;
+  if (lastProofTokenIdx < 0) lastProofTokenIdx = tokens.length - 1;
 
   return tokens.slice(firstProofTokenIdx, lastProofTokenIdx + 1);
 }
