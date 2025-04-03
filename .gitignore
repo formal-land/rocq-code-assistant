@@ -6,3 +6,4 @@ node_modules
 *.d.ts
 src/test/benchmarks/**/dataset/
 src/test/benchmarks/**/.vscode
+fix.md
