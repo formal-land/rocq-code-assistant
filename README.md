@@ -13,7 +13,7 @@ run
 ```sh
 ./download.sh
 ``` 
-Subsequently, the benchmark execution is provided as an internal. test within VS Code, labelled `miniF2F`.
+Subsequently, the benchmark execution is provided as an internal test within VS Code, labelled `miniF2F`.
 
 ## Tests
 ### Grammars
