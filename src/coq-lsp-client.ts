@@ -33,6 +33,16 @@ export class CoqLSPClient extends LanguageClient {
     if (!this.instance) this.instance = new CoqLSPClient();
     return this.instance;
   }
+
+  static restart() {
+    if (this.instance) {
+      if (this.instance.isRunning()) {
+        this.instance.restart();
+      } else {
+        this.instance = new CoqLSPClient();
+      }
+    }
+  }
   
   private constructor() {
     const clientOptions = { documentSelector: CoqSelector.owned };

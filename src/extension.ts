@@ -14,6 +14,7 @@ export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
   export const SELECT_MODEL = 'rocq-coding-assistant.select-model';
   export const SOLVE = 'rocq-coding-assistant.solve';
+  export const RESTART_COQ_LSP = 'rocq-coding-assistant.restart-CoqLSP';
 }
 
 let selectedModel: vscode.LanguageModelChat | undefined;
@@ -53,6 +54,9 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
   context.subscriptions.push(regSolve);
+
+  const regRestartCoqLSP = vscode.commands.registerCommand(Commands.RESTART_COQ_LSP, restartCoqLSPCallback);
+  context.subscriptions.push(regRestartCoqLSP);
 }
 
 export function deactivate() {
@@ -192,4 +196,8 @@ function didChangeConfigurationCallback(event: vscode.ConfigurationChangeEvent) 
     updateCustomOllamaLanguageModel();
   if (event.affectsConfiguration('rocq-coding-assistant.provider.openai'))
     updateCustomOpenAILanguageModel();
+}
+
+function restartCoqLSPCallback() {
+  CoqLSPClient.restart();
 }

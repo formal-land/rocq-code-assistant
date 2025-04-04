@@ -35,6 +35,13 @@ describe('miniF2F benchmark', () => {
     datasetDescription = YAML.parse(datasetDescriptionFileContent.toString());
   }
 
+  afterEach(async function () {
+    if (this.currentTest?.state === 'failed') {
+      console.log('');
+      await vscode.commands.executeCommand(Commands.RESTART_COQ_LSP);
+    }
+  });
+
   datasetDescription
     .flatMap(({ file, theorems }) =>
       theorems.map(theorem => ({ file: file, theorem: theorem })))

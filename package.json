@@ -27,6 +27,10 @@
       {
         "command": "rocq-coding-assistant.select-model",
         "title": "Rocq code assistant: select the model"
+      },
+      {
+        "command": "rocq-coding-assistant.restart-CoqLSP",
+        "title": "Rocq code assistant: restart CoqLSP"
       }
     ],
     "menus": {
