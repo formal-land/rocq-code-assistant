@@ -2,7 +2,6 @@ import * as assert from 'assert';
 import * as YAML from 'yaml';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as Prettier from '../../../syntax/prettier/prettier';
 import { Commands } from '../../../extension';
 import { Tokenizer } from '../../../syntax/tokenizer';
 import { Scope } from '../../../syntax/scope';
@@ -73,9 +72,6 @@ describe('miniF2F benchmark', () => {
           
           const proof = await Proof.fromTokens(fileUri.toString(), proofTokens);
           const success = await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)]);
-          // const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
-
-          // console.log(ppProof);
 
           assert.ok(success, 'Proof not found.');
         }
