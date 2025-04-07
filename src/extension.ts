@@ -9,6 +9,7 @@ import { CoqLSPClient } from './coq-lsp-client';
 import { Scope } from './syntax/scope';
 import { Proof } from './proof';
 import { BasicLLM } from './oracles/basic-LLM/oracle';
+import { NaturalLanguageDescription } from './oracles/natural-language-description/oracle';
 
 export namespace Commands {
   export const HELLO_WORLD = 'rocq-coding-assistant.hello-world';
@@ -93,7 +94,7 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
   }
 
   const proof = await Proof.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
-  const success = await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)], cancellationToken);
+  const success = await proof.autocomplete([new NaturalLanguageDescription(selectedModel as vscode.LanguageModelChat)], cancellationToken);
   const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
   return { proof, ppProof, success };
 }
