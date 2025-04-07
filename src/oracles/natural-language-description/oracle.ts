@@ -22,7 +22,7 @@ export class NaturalLanguageDescription implements Oracle {
       goalDescriptionFragments.push(fragment);
     const goalDescriptionText = goalDescriptionFragments.join('');
 
-    console.log(goalDescriptionText + '\n===========');
+    // console.log(goalDescriptionText + '\n===========');
 
     const proofNLMessages = prompt2.render(goal, goalDescriptionText);
 
@@ -33,7 +33,7 @@ export class NaturalLanguageDescription implements Oracle {
       proofNLFragments.push(fragment);
     const proofNLText = proofNLFragments.join('');
 
-    console.log(proofNLText + '\n===========');
+    // console.log(proofNLText + '\n===========');
 
     const coqCodeMessages = prompt3.render(goal, proofNLText);
 
@@ -43,7 +43,7 @@ export class NaturalLanguageDescription implements Oracle {
       coqCodeFragments.push(fragment);
     const coqCodeText = coqCodeFragments.join('');
 
-    console.log(coqCodeText + '\n===========');
+    // console.log(coqCodeText + '\n===========');
 
     const response = [];
     for (const match of coqCodeText.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)) {

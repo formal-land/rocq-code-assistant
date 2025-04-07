@@ -8,6 +8,7 @@ import { Scope } from '../../../syntax/scope';
 import * as extractors from '../../../syntax/extractors';
 import { Proof } from '../../../proof';
 import { BasicLLM } from '../../../oracles/basic-LLM/oracle';
+import { NaturalLanguageDescription } from '../../../oracles/natural-language-description/oracle';
 
 interface Test {
   file: string,
@@ -71,7 +72,7 @@ describe('miniF2F benchmark', () => {
           }
           
           const proof = await Proof.fromTokens(fileUri.toString(), proofTokens);
-          const success = await proof.autocomplete([new BasicLLM(selectedModel as vscode.LanguageModelChat)]);
+          const success = await proof.autocomplete([new NaturalLanguageDescription(selectedModel as vscode.LanguageModelChat)]);
 
           assert.ok(success, 'Proof not found.');
         }

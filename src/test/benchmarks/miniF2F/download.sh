@@ -1,10 +1,11 @@
 #!/bin/bash
 
-git clone "https://github.com/LLM4Rocq/miniF2F-rocq/"
 mkdir -p "./dataset"
+git clone "https://github.com/LLM4Rocq/miniF2F-rocq/"
 cp -r "./miniF2F-rocq/test" "./dataset/"
 cp -r "./miniF2F-rocq/valid" "./dataset/"
 rm -rf "./miniF2F-rocq"
+wget -q "https://raw.githubusercontent.com/LLM4Rocq/nlir/ac1db7e7e54decd34dfbb5f47e607aab2436970e/conf/benchmark/miniF2F.yaml" -O "./dataset/miniF2F.yaml"
 
 for directory in "./dataset/test" "./dataset/valid"; do
   if [ ! -d "$directory" ]; then
