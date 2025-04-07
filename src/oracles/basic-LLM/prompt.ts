@@ -6,7 +6,7 @@ import { Name } from '../../syntax/scope';
 export function render(goal: Goal<PpString>, params?: OracleParams) {
   const messages: LanguageModelChatMessage[] = [];
 
-  const introPart = LanguageModelChatMessage.User(`
+  const introPart = LanguageModelChatMessage.User(`\
 You are an expert in Coq theorem proving.  
 You will be given a goal statement, and your task is to provide a complete proof using only Coq tactics.  
 
@@ -23,7 +23,8 @@ You will be given a goal statement, and your task is to provide a complete proof
       block.names.map(name => `* ${name} : ${block.ty}`))
     .join('\n');
     
-  const goalPart = LanguageModelChatMessage.User(`The goal you have to prove is:
+  const goalPart = LanguageModelChatMessage.User(`\
+The goal you have to prove is:
 
 ${goal.ty} ${hypotesisPart.length > 0 ? `
 
@@ -41,8 +42,8 @@ ${hypotesisPart}` : ''}`);
 \t- error: ${ message?.trim().replaceAll('\n', `\n\t${' '.repeat('- error: '.length)}`) }`)
     .join('\n');
 
-  const errorHistoryPart = LanguageModelChatMessage.User(`These solutions have already been \
-tried and they do not work. Please, avoid them. 
+  const errorHistoryPart = LanguageModelChatMessage.User(`\
+These solutions have already been tried and they do not work. Please, avoid them. 
 For each of them, the tactic where it failed is put between triple angle brackets \`<<< >>>\` and a \ 
 description of the error is provided.
 ${errorHistoryListPart}`);
