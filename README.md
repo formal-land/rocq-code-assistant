@@ -1,4 +1,4 @@
-# rocq coding assistant
+# Rocq code assistant
 
 ## 📊 Benchmarks
 ### MiniF2F
