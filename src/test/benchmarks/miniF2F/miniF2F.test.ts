@@ -9,6 +9,7 @@ import * as extractors from '../../../syntax/extractors';
 import { Proof } from '../../../proof';
 import { BasicLLM } from '../../../oracles/basic-LLM/oracle';
 import { NaturalLanguageDescription } from '../../../oracles/natural-language-description/oracle';
+import { shuffle } from '../../../utils';
 
 interface Test {
   file: string,
@@ -16,6 +17,7 @@ interface Test {
 }
 
 const DATASET_DESCRIPTION_PATH = './dataset/miniF2F.yaml';
+const TEST_SIZE = 20; // Set to -1 to execute all the tests
 
 describe('miniF2F benchmark', () => {
   before(async function () {
@@ -42,9 +44,14 @@ describe('miniF2F benchmark', () => {
     }
   });
 
-  datasetDescription
-    .flatMap(({ file, theorems }) =>
-      theorems.map(theorem => ({ file: file, theorem: theorem })))
+  let flatdatasetDescription = datasetDescription
+    .flatMap(({ file, theorems }) => 
+      theorems.map(theorem => ({ file: file, theorem: theorem })));
+  
+  if (TEST_SIZE >= 0)
+    flatdatasetDescription = shuffle(flatdatasetDescription).slice(0, TEST_SIZE);
+
+  flatdatasetDescription
     .forEach(({ file, theorem }) => 
       it(`Test ${file}: ${theorem}`, async function () {  
         if (!vscode.workspace.workspaceFolders) {
@@ -54,7 +61,7 @@ describe('miniF2F benchmark', () => {
           const fileDocument = await vscode.workspace.openTextDocument(fileUri);
           vscode.window.showTextDocument(fileDocument);
       
-          const selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4o-2024-11-20');
+          const selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4');
           assert.notEqual(selectedModel, undefined);
       
           const textEditor = vscode.window.activeTextEditor;
