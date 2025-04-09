@@ -1,11 +1,9 @@
 import { LanguageModelChatMessage } from 'vscode';
-import { OracleParams } from '../types';
+import { Oracle } from '../oracle';
 import { Name } from '../../syntax/scope';
 
-export function render(history: LanguageModelChatMessage[], params?: OracleParams) {
+export function render(params?: Oracle.Params) {
   const messages: LanguageModelChatMessage[] = [];
-
-  const rolePart = LanguageModelChatMessage.User('You are an expert in math and Coq theorem proving.');
 
   const introPart = LanguageModelChatMessage.User(`\
 Translate the natural language description of the proof in Coq code.
@@ -36,8 +34,8 @@ For each of them, the tactic where it failed is put between triple angle bracket
 description of the error is provided.
 ${errorHistoryListPart}`);
 
-  messages.push(rolePart, ...history, introPart);
+  messages.push(introPart);
   if (errorHistoryListPart) messages.push(errorHistoryPart);
 
-  return { messages: messages, history: messages.slice(5) };
+  return messages;
 }

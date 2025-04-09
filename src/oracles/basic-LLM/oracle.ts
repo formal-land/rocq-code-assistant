@@ -1,27 +1,14 @@
 import * as vscode from 'vscode';
-import * as utils from '../../utils';
 import { Goal, PpString } from '../../lib/coq-lsp/types';
+import * as utils from '../../utils';
 import * as prompt from './prompt';
-import { Oracle, OracleParams } from '../types';
+import { Oracle } from '../oracle';
 
-export class BasicLLM implements Oracle {
-  private model: vscode.LanguageModelChat;
-
-  constructor(model: vscode.LanguageModelChat) {
-    this.model = model;
-  }
-
-  async query(goal: Goal<PpString>, params?: OracleParams, cancellationToken?: vscode.CancellationToken) {
+export class BasicLLM extends Oracle {
+  async query(goal: Goal<PpString>, params?: Oracle.Params, cancellationToken?: vscode.CancellationToken) {
     const messages = prompt.render(goal, params);
-
-    // console.log(utils.languageModelChatMessagesToString(messages));
-
-    const rawResponse = await this.model.sendRequest(messages, {}, cancellationToken);
-    
-    const fragments: string[] = [];
-    for await (const fragment of rawResponse.text)
-      fragments.push(fragment);
-    const rawResponseText = fragments.join('');
+    const rawResponse = await this.model.sendRequest(messages, cancellationToken);
+    const rawResponseText = utils.languageModelChatMessagesToString([rawResponse]);
 
     const response = [];
     for (const match of rawResponseText.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)) {

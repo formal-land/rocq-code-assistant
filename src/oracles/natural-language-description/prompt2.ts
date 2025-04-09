@@ -1,9 +1,7 @@
 import { LanguageModelChatMessage } from 'vscode';
 
-export function render(history: LanguageModelChatMessage[]) {
+export function render() {
   const messages: LanguageModelChatMessage[] = [];
-
-  const rolePart = LanguageModelChatMessage.User('You are an expert in math and Coq theorem proving.');
 
   const introPart = LanguageModelChatMessage.User(`\
 Provide a complete description of the proof in natural language.
@@ -13,7 +11,7 @@ Provide a complete description of the proof in natural language.
 - It must be presented across multiple successive points
 - Produce the proof description only, without any introduction.`);
 
-  messages.push(rolePart, ...history, introPart);
+  messages.push(introPart);
 
-  return { messages: messages, history: messages.slice(3) };
+  return messages;
 }

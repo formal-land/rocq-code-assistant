@@ -3,7 +3,7 @@ import { Token, Tokenizer } from './syntax/tokenizer';
 import { PetState } from './lib/coq-lsp/types';
 import { CoqLSPClient, Request } from './coq-lsp-client';
 import { Name, Scope } from './syntax/scope';
-import { Oracle, OracleParams } from './oracles/types';
+import { Oracle, OracleParams } from './oracles/oracle';
 
 export class Proof {
   readonly name: string;

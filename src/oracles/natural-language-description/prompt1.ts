@@ -4,8 +4,8 @@ import { Goal, PpString } from '../../lib/coq-lsp/types';
 export function render(goal: Goal<PpString>) {
   const messages: LanguageModelChatMessage[] = [];
 
-  const rolePart = LanguageModelChatMessage.User('You are an expert in math and Coq theorem proving.');
-
+  const rolePart = LanguageModelChatMessage.User('You are an expert in math and Coq theorem proving.')
+  
   const introPart = LanguageModelChatMessage.User(`\
 You will be given a goal statement written in Coq, and your task is to provide a natural language translation of the statement.
 
@@ -33,5 +33,5 @@ ${hypotesisPart}` : ''}`);
 
   messages.push(rolePart, introPart, goalPart);
   
-  return { messages: messages, history: messages.slice(1) };
+  return messages;
 }

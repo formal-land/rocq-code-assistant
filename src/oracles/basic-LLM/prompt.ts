@@ -1,9 +1,9 @@
 import { LanguageModelChatMessage } from 'vscode';
 import { Goal, PpString } from '../../lib/coq-lsp/types';
-import { OracleParams } from '../types';
+import { Oracle } from '../oracle';
 import { Name } from '../../syntax/scope';
 
-export function render(goal: Goal<PpString>, params?: OracleParams) {
+export function render(goal: Goal<PpString>, params?: Oracle.Params) {
   const messages: LanguageModelChatMessage[] = [];
 
   const introPart = LanguageModelChatMessage.User(`\
