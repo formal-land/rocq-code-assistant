@@ -7,7 +7,6 @@ import { Tokenizer } from '../../../syntax/tokenizer';
 import { Scope } from '../../../syntax/scope';
 import * as extractors from '../../../syntax/extractors';
 import { Proof } from '../../../proof';
-import { BasicLLM } from '../../../oracles/basic-LLM/oracle';
 import { NaturalLanguageDescription } from '../../../oracles/natural-language-description/oracle';
 import { shuffle } from '../../../utils';
 
@@ -61,7 +60,7 @@ describe('miniF2F benchmark', () => {
           const fileDocument = await vscode.workspace.openTextDocument(fileUri);
           vscode.window.showTextDocument(fileDocument);
       
-          const selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4');
+          const selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4o');
           assert.notEqual(selectedModel, undefined);
       
           const textEditor = vscode.window.activeTextEditor;

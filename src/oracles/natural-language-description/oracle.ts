@@ -11,7 +11,7 @@ export class NaturalLanguageDescription extends Oracle {
     const chat = this.model.chat(cancellationToken);
     await chat.continue(() => prompt1.render(goal));
     await chat.continue(() => prompt2.render());
-    await chat.continue(() => prompt3.render());
+    await chat.continue(() => prompt3.render(params));
     const rawResponseText = utils.languageModelChatMessagesToString([<vscode.LanguageModelChatMessage>chat.close().at(-1)]);
 
     const response = [];
