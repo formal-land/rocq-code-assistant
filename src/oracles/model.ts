@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as utils from '../utils';
 
-class Chat<T extends Model> {
-  private model: T;
+class Chat {
+  private model: Model;
   private history: vscode.LanguageModelChatMessage[] = [];
   private cancellationToken?: vscode.CancellationToken;
 
-  constructor(model: T, history: vscode.LanguageModelChatMessage[] = [], cancellationToken?: vscode.CancellationToken) {
+  constructor(model: Model, history: vscode.LanguageModelChatMessage[] = [], cancellationToken?: vscode.CancellationToken) {
     this.history = history;
     this.model = model;
     this.cancellationToken = cancellationToken;
