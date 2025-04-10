@@ -61,10 +61,20 @@
       "end": "\\*\\)",
       "name": "comment.block.coq",
       "patterns": [
-        {
-          "include": "#block_comment"
-        }
+        { "include": "#block_comment" },
+        { "include": "#hint" },
+        { "include": "#example" }
       ]
+    },
+    "hint": {
+      "begin": "(?<=@hint)",
+      "end": "(?=@(.)+)",
+      "name": "meta.comment.hint.coq"
+    },
+    "example": {
+      "begin": "(?<=@example)",
+      "end": "(?=@(.)+)",
+      "name": "meta.comment.example.coq"
     }
   },
   "scopeName": "source.coq.proof",

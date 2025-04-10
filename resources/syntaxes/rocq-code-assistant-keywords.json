@@ -1,0 +1,18 @@
+{
+  "scopeName": "rocq-code-assistant-keywords.injection",
+  "injectionSelector": "L:comment.block.coq",
+  "patterns": [
+    { "include": "#hint-keyword" },
+    { "include": "#example-keyword" }
+  ],
+  "repository": {
+    "hint-keyword": {
+      "match": "@hint",
+      "name": "keyword.hint"
+    },
+    "example-keyword": {
+      "match": "@example",
+      "name": "keyword.example"
+    }
+  }
+}
