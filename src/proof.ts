@@ -3,7 +3,7 @@ import { Token, Tokenizer } from './syntax/tokenizer';
 import { PetState } from './lib/coq-lsp/types';
 import { CoqLSPClient, Request } from './coq-lsp-client';
 import { Name, Scope } from './syntax/scope';
-import { Oracle, OracleParams } from './oracles/oracle';
+import { Oracle } from './oracles/oracle';
 
 export class Proof {
   readonly name: string;
@@ -302,7 +302,7 @@ export namespace Proof {
     async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
       const MAX_ATTEMPTS = 3;
       const answers = [];
-      const oracleParams: OracleParams = {
+      const oracleParams: Oracle.Params = {
         errorHistory: []
       };
       let attempts = 0;

@@ -16,7 +16,7 @@ suite('Prompt1 Test Suite', () => {
       ]
     };
 
-    const { messages } = prompt1.render(goal);
+    const messages = prompt1.render(goal);
 
     assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });

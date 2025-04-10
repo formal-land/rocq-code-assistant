@@ -35,7 +35,7 @@ suite('Prompt3 Test Suite', () => {
       }]
     };
 
-    const { messages } = prompt3.render([], params);
+    const messages = prompt3.render(params);
    
     assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });
