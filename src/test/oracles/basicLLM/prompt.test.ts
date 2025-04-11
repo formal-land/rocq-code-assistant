@@ -44,7 +44,11 @@ Hx : test x = true
 Hl : All (fun x : X => test x = true) l
 Unable to unify "true" with "test x && forallb test l".
 `
-      }]
+      }],
+      hints: [
+        'Use the tactic `tactic1` to solve the goal.',
+        'Use the tactic `tactic2` to solve the goal.',
+        'Use the tactic `tactic3` to solve the goal.',]
     };
 
     const messages = prompt.render(goal, params);

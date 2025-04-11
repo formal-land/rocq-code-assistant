@@ -31,6 +31,13 @@ ${goal.ty} ${hypotesisPart.length > 0 ? `
 You can use the following hypotesis: 
 ${hypotesisPart}` : ''}`);
 
+  const hintsListPart = params?.hints
+    ?.map(hint => `- ${ hint.trim() }`);
+  
+  const hintsPart = LanguageModelChatMessage.User(`\
+These hints may help you to solve the goal. Please, use them if you find them useful.
+${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
+
   const errorHistoryListPart = params?.errorHistory
     ?.map(({ tactics, at,  message }, idx) => `* Solution ${ idx + 1 }:
 \t- tactics: ${
@@ -50,6 +57,7 @@ ${errorHistoryListPart}`);
 
   messages.push(introPart);
   messages.push(goalPart);
+  if (hintsListPart) messages.push(hintsPart);
   if (errorHistoryListPart) messages.push(errorHistoryPart);
   
   return messages;
