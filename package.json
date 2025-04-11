@@ -17,7 +17,7 @@
   "contributes": {
     "grammars": [
       {
-        "path": "./resources/syntaxes/rocq-code-assistant-keywords.json",
+        "path": "./syntaxes/rocq-code-assistant-keywords.json",
         "scopeName": "rocq-code-assistant-keywords.injection",
         "injectTo": ["source.coq"]
       }

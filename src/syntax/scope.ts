@@ -15,5 +15,9 @@ export const enum Name {
   TACTIC = 'meta.proof.body.tactic.coq',
   ADMIT = 'meta.proof.body.tactic.admit.coq',
   FOCUSING_CONSTRUCT = 'meta.proof.body.focus.coq',
-  EXECUTABLE = 'meta.proof.body.executable.coq'
+  EXECUTABLE = 'meta.proof.body.executable.coq',
+  HINT = 'meta.comment.hint.coq',
+  EXAMPLE = 'meta.proof.body.example.coq',
+  HINT_KEYWORD = 'keyword.hint.coq',
+  EXAMPLE_KEYWORD = 'keyword.example.coq',
 }

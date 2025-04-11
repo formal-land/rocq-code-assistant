@@ -25,21 +25,23 @@ Qed.
 // <--------------------- comment.block.coq - meta.proof.coq
 //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ - comment.block.coq meta.proof.coq
 
-(* 
+(*
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ultricies laoreet faucibus. 
 // <--------------------------------------------------------------------------------------- comment.block.coq - meta.comment.hint.coq meta.comment.examples.coq
 Aenean quis vulputate libero, sit amet porta augue. Aenean vehicula non enim nec blandit.
 
 @hint Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ultricies laoreet faucibus.
-// <----- comment.block.coq - meta.comment.hint.coq meta.comment.example.coq
+// <----- comment.block.coq keyword.hint.coq - meta.comment.hint.coq meta.comment.example.coq
 //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment.block.coq meta.comment.hint.coq - meta.comment.examples.coq 
 Aenean quis vulputate libero, sit amet porta augue.
 // <-------------------------------------------------- meta.comment.hint.coq
 @example Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ultricies laoreet faucibus.
-// <-------- comment.block.coq - meta.comment.example.coq meta.comment.hint.coq
-//        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment.block.coq meta.comment.example.coq  - meta.comment.hint.coq
+// <-------- comment.block.coq keyword.example.coq - meta.comment.example.coq meta.comment.hint.coq
+//        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.comment.example.coq  - meta.comment.hint.coq
 Aenean quis vulputate libero, sit amet porta augue.
+// <-------------------------------------------------- comment.block.coq meta.comment.example.coq - meta.comment.hint.coq
 *)
+<-- comment.block.coq - meta.comment.examples.coq meta.comment.hint.coq
 
 Lemma and_intro : forall A B : Prop, A -> B -> A /\ B.
-// <--- - meta.comment.examples.coq
+// <----------------------------------------------------- - comment.block.coq meta.comment.example.coq

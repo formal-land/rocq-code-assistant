@@ -78,8 +78,8 @@ export class Tokenizer {
       });
 
     const grammars = [ 
-      { path: path.join(__dirname, ('../../resources/syntaxes/coq-proof.json')), scopeName: Scope.PROOF },
-      { path: path.join(__dirname, ('../../resources/syntaxes/coq-proof-body.json')), scopeName: Scope.PROOF_BODY } 
+      { path: path.join(__dirname, ('../../resources/grammars/coq-proof.json')), scopeName: Scope.PROOF },
+      { path: path.join(__dirname, ('../../resources/grammars/coq-proof-body.json')), scopeName: Scope.PROOF_BODY } 
     ];
 
     this.registry = new vsctm.Registry({

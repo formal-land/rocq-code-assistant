@@ -8,11 +8,11 @@
   "repository": {
     "hint-keyword": {
       "match": "@hint",
-      "name": "keyword.hint"
+      "name": "keyword.hint.coq"
     },
     "example-keyword": {
       "match": "@example",
-      "name": "keyword.example"
+      "name": "keyword.example.coq"
     }
   }
 }

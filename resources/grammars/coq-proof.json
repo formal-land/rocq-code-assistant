@@ -62,18 +62,28 @@
       "name": "comment.block.coq",
       "patterns": [
         { "include": "#block_comment" },
+        { "include": "#hint-keyword" },
+        { "include": "#example-keyword" },
         { "include": "#hint" },
         { "include": "#example" }
       ]
     },
+    "hint-keyword": {
+      "match": "@hint",
+      "name": "keyword.hint.coq"
+    },
+    "example-keyword": {
+      "match": "@example",
+      "name": "keyword.example.coq"
+    },
     "hint": {
       "begin": "(?<=@hint)",
-      "end": "(?=@(.)+)",
+      "end": "(?=@(.)+|\\*\\))",
       "name": "meta.comment.hint.coq"
     },
     "example": {
       "begin": "(?<=@example)",
-      "end": "(?=@(.)+)",
+      "end": "(?=@(.)+|\\*\\))",
       "name": "meta.comment.example.coq"
     }
   },
