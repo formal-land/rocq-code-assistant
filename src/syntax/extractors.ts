@@ -22,6 +22,8 @@ export function extractProofTokensFromPosition(position: vscode.Position, tokens
 }
 
 function extractProofTokensAroundToken(baseToken: Token, tokens: Token[]) {
+  const extractedTokens = [];
+
   const baseTokenIdx = tokens.indexOf(baseToken);
 
   const firstProofTokenIdx = tokens.findLastIndex((token, idx) => 
@@ -33,5 +35,22 @@ function extractProofTokensAroundToken(baseToken: Token, tokens: Token[]) {
     !token.scopes.includes(Name.PROOF)) - 1;
   if (lastProofTokenIdx < 0) lastProofTokenIdx = tokens.length - 1;
 
-  return tokens.slice(firstProofTokenIdx, lastProofTokenIdx + 1);
+  const lastCommentTokenIdx = tokens.findLastIndex((token, idx) =>
+    idx <= firstProofTokenIdx &&
+    token.scopes.includes(Name.COMMENT));
+
+  const firstCommentTokenIdx = tokens.findLastIndex((token, idx) =>
+    idx <= lastCommentTokenIdx &&
+    !token.scopes.includes(Name.COMMENT)) + 1;
+
+  const existsAssociatedComment = !tokens.some((token, idx) =>
+    idx > lastCommentTokenIdx &&
+    idx < firstProofTokenIdx &&
+    token.value !== '');
+
+  if (existsAssociatedComment)
+    extractedTokens.push(...tokens.slice(firstCommentTokenIdx, lastCommentTokenIdx + 1));
+  extractedTokens.push(...tokens.slice(firstProofTokenIdx, lastProofTokenIdx + 1));
+
+  return extractedTokens;
 }

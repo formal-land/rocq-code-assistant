@@ -18,6 +18,8 @@ export namespace Oracle {
     errorHistory?: { 
       tactics: Token[],
       at: number,
-      message?: string }[]
+      message?: string }[],
+    hints?: string[],
+    examples?: string[]
   }
 }

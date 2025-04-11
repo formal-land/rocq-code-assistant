@@ -27,6 +27,13 @@ export function zip<T, U>(first: Array<T>, second: Array<U>): Array<[T, U]> {
   return zipped;
 }
 
+export function split<T>(array: T[], at: number[]) {
+  const leftIdx = [0, ...at];
+  const rightIdx = [...at, array.length];
+  const pairSplitIdx = zip(leftIdx, rightIdx).filter(([start, end]) => start !== end);
+  return pairSplitIdx.map(([start, end]) => array.slice(start + 1, end));
+}
+
 export class Stack<T> {
   readonly items: T[] = [];
   

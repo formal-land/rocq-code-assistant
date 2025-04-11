@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as utils from './utils';
 import { Token, Tokenizer } from './syntax/tokenizer';
 import { PetState } from './lib/coq-lsp/types';
 import { CoqLSPClient, Request } from './coq-lsp-client';
@@ -53,14 +54,28 @@ export class Proof {
       
     const bodyTokens = tokens
       .filter(token => token.scopes.includes(Name.PROOF_BODY));
-      
+
+    let hintsTokens = tokens
+      .filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
+    const hintsSplitIdx = hintsTokens
+      .reduce((acc, token, idx) => token.scopes.includes(Name.HINT_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
+    const hints = utils.split(hintsTokens, hintsSplitIdx)
+      .map(hint => hint.map(token => token.value).join(' '));
+
+    let examplesTokens = tokens
+      .filter(token => token.scopes.includes(Name.EXAMPLE) || token.scopes.includes(Name.EXAMPLE_KEYWORD));
+    const examplesSplitIdx = examplesTokens
+      .reduce((acc, token, idx) => token.scopes.includes(Name.EXAMPLE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
+    const examples = utils.split(examplesTokens, examplesSplitIdx)
+      .map(example => example.map(token => token.value).join(' '));
+
     const editorLocation = new vscode.Range(
       tokens[0].range.start.line, 
       tokens[0].range.start.character, 
       tokens[tokens.length - 1].range.end.line, 
       tokens[tokens.length - 1].range.end.character);
         
-    return Proof.init(name, type, { keyword, uri, editorLocation }, bodyTokens, cancellationToken);
+    return Proof.init(name, type, { keyword, uri, editorLocation, hints, examples }, bodyTokens, cancellationToken);
   }
 
   private merge(workingBlock: Proof.WorkingBlock) {
@@ -113,7 +128,11 @@ export namespace Proof {
     /**
      * Location of the proof in the edited file.
      */
-    editorLocation: vscode.Range
+    editorLocation: vscode.Range,
+
+    hints?: string[],
+
+    examples?: string[]
   }
 
   /**
