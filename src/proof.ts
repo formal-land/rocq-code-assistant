@@ -22,7 +22,7 @@ export class Proof {
   private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
       .sendRequest(Request.Petanque.start, { uri: metadata.uri, thm: name, pre_commands: null }, cancellationToken);
-    const workingBlock = new Proof.WorkingBlock(startingState, startingState);
+    const workingBlock = new Proof.WorkingBlock(startingState, startingState, {});
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
     if (tryResult.status) {
@@ -213,6 +213,7 @@ export namespace Proof {
    */
   export class WorkingBlock extends Element {
     readonly elements: WorkingBlock.Element[];
+    readonly metadata: WorkingBlock.Metadata;
   
     /**
      * @param petState A Petanque state that represents, from the outside, a global successfull 
@@ -220,9 +221,10 @@ export namespace Proof {
      * @param startingState A Petanque state that is used as the starting execution point of the 
      * tokens added to the block.
      */
-    constructor(petState: PetState, startingState: PetState) {
+    constructor(petState: PetState, startingState: PetState, metadata: WorkingBlock.Metadata) {
       super(petState);
       this.elements = [ new WorkingBlock.StartToken(startingState) ];
+      this.metadata = metadata;
     }
 
     /**
@@ -334,7 +336,9 @@ export namespace Proof {
       const MAX_ATTEMPTS = 3;
       const answers = [];
       const oracleParams: Oracle.Params = {
-        errorHistory: []
+        errorHistory: [],
+        hints: this.metadata.hints,
+        examples: this.metadata.examples
       };
       let attempts = 0;
       let goals;
@@ -387,6 +391,14 @@ export namespace Proof {
   }
 
   export namespace WorkingBlock {
+
+    /** 
+     * Metadata for a {@link WorkingBlock}. 
+     */
+    export interface Metadata {
+      hints?: string[], 
+      examples?: string[]
+    }
 
     /**
      * Extension of {@link Proof.Element} to allow incremental build of a proof.
@@ -452,7 +464,7 @@ export namespace Proof {
        */
       templatize() {
         if (this.petState && this.prePetState && this.token.scopes.includes(Name.ADMIT))
-          return [ new WorkingBlock(this.petState, this.prePetState) ];
+          return [ new WorkingBlock(this.petState, this.prePetState, {}) ];
         else 
           return [ new Proof.SingleToken(this.token, this.petState) ];
       }
