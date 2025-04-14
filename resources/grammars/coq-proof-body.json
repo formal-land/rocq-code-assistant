@@ -4,6 +4,7 @@
   "patterns": [
     { "include": "#tactic" },
     { "include": "#focusing_construct" },
+    { "include": "#rocq_code_assistant_block_comment"},
     { "include": "#block_comment" }
   ],
   "repository": {
@@ -24,13 +25,13 @@
       "match": "(?<!\\w)([-\\+\\*\\{\\}])(?!\\w)",
       "name": "meta.proof.body.focus.coq meta.proof.body.executable.coq"
     },
-    "block_comment": {
+    "rocq_code_assistant_block_comment": {
       "applyEndPatternLast": 1,
-      "begin": "\\(\\*(?!#)",
+      "begin": "\\(\\*\\*(?!#)",
       "end": "\\*\\)",
-      "name": "comment.block.coq",
+      "name": "rocq-code-assistant-comment.block.coq",
       "patterns": [
-        { "include": "#block_comment" },
+        { "include": "#rocq_code_assistant_block_comment" },
         { "include": "#hint-keyword" },
         { "include": "#example-keyword" },
         { "include": "#hint" },
@@ -54,6 +55,15 @@
       "begin": "(?<=@example)",
       "end": "(?=@(.)+|\\*\\))",
       "name": "meta.comment.example.coq"
+    },
+    "block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.coq",
+      "patterns": [
+        { "include": "#block_comment" }
+      ]
     }
   },
   "scopeName": "source.coq.proof.body",

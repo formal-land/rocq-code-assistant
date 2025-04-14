@@ -1,11 +1,21 @@
 {
   "scopeName": "rocq-code-assistant-keywords.injection",
-  "injectionSelector": "L:comment.block.coq",
+  "injectionSelector": "L:source.coq",
   "patterns": [
-    { "include": "#hint-keyword" },
-    { "include": "#example-keyword" }
+    { "include": "#rocq_code_assistant_block_comment" }
   ],
   "repository": {
+    "rocq_code_assistant_block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "rocq-code-assistant-comment.block.coq",
+      "patterns": [
+        { "include": "#rocq_code_assistant_block_comment" },
+        { "include": "#hint-keyword" },
+        { "include": "#example-keyword" }
+      ]
+    },
     "hint-keyword": {
       "match": "@hint",
       "name": "keyword.hint.coq"
