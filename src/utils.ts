@@ -31,7 +31,7 @@ export function split<T>(array: T[], at: number[]) {
   const leftIdx = [0, ...at];
   const rightIdx = [...at, array.length];
   const pairSplitIdx = zip(leftIdx, rightIdx).filter(([start, end]) => start !== end);
-  return pairSplitIdx.map(([start, end]) => array.slice(start + 1, end));
+  return pairSplitIdx.map(([start, end]) => array.slice(start, end));
 }
 
 export class Stack<T> {

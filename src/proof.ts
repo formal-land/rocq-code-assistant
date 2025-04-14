@@ -55,19 +55,33 @@ export class Proof {
     const bodyTokens = tokens
       .filter(token => token.scopes.includes(Name.PROOF_BODY));
 
-    let hintsTokens = tokens
-      .filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
-    const hintsSplitIdx = hintsTokens
-      .reduce((acc, token, idx) => token.scopes.includes(Name.HINT_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
-    const hints = utils.split(hintsTokens, hintsSplitIdx)
-      .map(hint => hint.map(token => token.value).join(' '));
+    const commentsTokens = tokens
+      .filter(token => token.scopes.includes(Name.COMMENT));
+    const commentsSplitIdx = commentsTokens
+      .reduce((acc, token, idx) => token.value.endsWith('*)') ? [...acc, idx + 1] : acc, [] as number[]);
+    const comments = utils
+      .split(commentsTokens, commentsSplitIdx)
+      .map(comment => {
+        let hintsTokens = comment
+          .filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
+        const hintsSplitIdx = hintsTokens
+          .reduce((acc, token, idx) => token.scopes.includes(Name.HINT_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
+        const hints = utils.split(hintsTokens, hintsSplitIdx)
+          .map(hint => hint
+            .slice(1)
+            .map(token => token.value.trim()).join(' '));
 
-    let examplesTokens = tokens
-      .filter(token => token.scopes.includes(Name.EXAMPLE) || token.scopes.includes(Name.EXAMPLE_KEYWORD));
-    const examplesSplitIdx = examplesTokens
-      .reduce((acc, token, idx) => token.scopes.includes(Name.EXAMPLE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
-    const examples = utils.split(examplesTokens, examplesSplitIdx)
-      .map(example => example.map(token => token.value).join(' '));
+        let examplesTokens = comment
+          .filter(token => token.scopes.includes(Name.EXAMPLE) || token.scopes.includes(Name.EXAMPLE_KEYWORD));
+        const examplesSplitIdx = examplesTokens
+          .reduce((acc, token, idx) => token.scopes.includes(Name.EXAMPLE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
+        const examples = utils.split(examplesTokens, examplesSplitIdx)
+          .map(example => example
+            .slice(1)
+            .map(token => token.value.trim()).join(' '));
+
+        return { hints, examples };
+      });
 
     const editorLocation = new vscode.Range(
       tokens[0].range.start.line, 
@@ -75,7 +89,7 @@ export class Proof {
       tokens[tokens.length - 1].range.end.line, 
       tokens[tokens.length - 1].range.end.character);
         
-    return Proof.init(name, type, { keyword, uri, editorLocation, hints, examples }, bodyTokens, cancellationToken);
+    return Proof.init(name, type, { keyword, uri, editorLocation, comments }, bodyTokens, cancellationToken);
   }
 
   private merge(workingBlock: Proof.WorkingBlock) {
@@ -130,9 +144,7 @@ export namespace Proof {
      */
     editorLocation: vscode.Range,
 
-    hints?: string[],
-
-    examples?: string[]
+    comments?: { hints?: string[], examples?: string[] }[]
   }
 
   /**
