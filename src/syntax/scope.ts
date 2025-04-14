@@ -17,7 +17,7 @@ export const enum Name {
   FOCUSING_CONSTRUCT = 'meta.proof.body.focus.coq',
   EXECUTABLE = 'meta.proof.body.executable.coq',
   HINT = 'meta.comment.hint.coq',
-  EXAMPLE = 'meta.proof.body.example.coq',
+  EXAMPLE = 'meta.comment.example.coq',
   HINT_KEYWORD = 'keyword.hint.coq',
   EXAMPLE_KEYWORD = 'keyword.example.coq',
 }
