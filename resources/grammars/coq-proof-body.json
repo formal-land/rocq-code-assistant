@@ -29,7 +29,7 @@
       "applyEndPatternLast": 1,
       "begin": "\\(\\*\\*(?!#)",
       "end": "\\*\\)",
-      "name": "rocq-code-assistant-comment.block.coq",
+      "name": "comment.block.rocq-code-assistant.coq",
       "patterns": [
         { "include": "#rocq_code_assistant_block_comment" },
         { "include": "#hint-keyword" },
