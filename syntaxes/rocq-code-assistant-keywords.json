@@ -13,7 +13,8 @@
       "patterns": [
         { "include": "#rocq_code_assistant_block_comment" },
         { "include": "#hint-keyword" },
-        { "include": "#example-keyword" }
+        { "include": "#example-keyword" },
+        { "include": "#example" }
       ]
     },
     "hint-keyword": {
@@ -23,6 +24,17 @@
     "example-keyword": {
       "match": "@example",
       "name": "keyword.example.coq"
+    },
+    "example": {
+      "begin": "(?<=@example)",
+      "end": "(?=@(.)+|\\*\\))",
+      "name": "meta.comment.example.coq",
+      "patterns": [
+        {
+          "match": "\\S+#\\S+\\ *$",
+          "name": "markup.underline.link.coq"
+        }
+      ]
     }
   }
 }
