@@ -25,6 +25,7 @@ export class Proof {
     const workingBlock = new Proof.WorkingBlock(startingState, startingState, {});
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
+    
     if (tryResult.status) {
       workingBlock.accept();
       proof.merge(workingBlock);
@@ -33,6 +34,14 @@ export class Proof {
       throw new Error('Proof contains errors.');
       // TODO: workingBlock.repair();
     }
+
+    proof.body
+      .filter(element => element instanceof Proof.WorkingBlock)
+      .forEach((element, idx) => element.metadata = {
+        hints: proof.metadata.comments?.at(idx)?.hints,
+        examples: proof.metadata.comments?.at(idx)?.examples
+      });
+
     return proof;
   }
 
@@ -213,7 +222,7 @@ export namespace Proof {
    */
   export class WorkingBlock extends Element {
     readonly elements: WorkingBlock.Element[];
-    readonly metadata: WorkingBlock.Metadata;
+    metadata: WorkingBlock.Metadata;
   
     /**
      * @param petState A Petanque state that represents, from the outside, a global successfull 
@@ -296,7 +305,7 @@ export namespace Proof {
      * @returns A list of {@link Element} where admit are substitued by new {@link WorkingBlock}.
      */
     templatize() {
-      return this.elements.flatMap(element => element.templatize());
+      return this.elements.flatMap(element => element.templatize(this.metadata));
     }
 
     /**
@@ -425,7 +434,7 @@ export namespace Proof {
       /**
        * Generates a templatized version of this element.
        */
-      abstract templatize(): Proof.Element[];
+      abstract templatize(metadata: WorkingBlock.Metadata): Proof.Element[];
     }
 
     /**
@@ -462,9 +471,9 @@ export namespace Proof {
        * returns a new {@link WorkingBlock} TODO:!
        * @returns 
        */
-      templatize() {
+      templatize(metadata: WorkingBlock.Metadata) {
         if (this.petState && this.prePetState && this.token.scopes.includes(Name.ADMIT))
-          return [ new WorkingBlock(this.petState, this.prePetState, {}) ];
+          return [ new WorkingBlock(this.petState, this.prePetState, metadata) ];
         else 
           return [ new Proof.SingleToken(this.token, this.petState) ];
       }
