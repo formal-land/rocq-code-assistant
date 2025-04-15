@@ -11,7 +11,7 @@ export const enum Name {
   PROOF_NAME = 'meta.proof.head.name.coq',
   PROOF_BIND = 'meta.proof.head.bind.coq',
   PROOF_TYPE = 'meta.proof.head.type.coq',
-  COMMENT = 'comment.block.coq',
+  COMMENT = 'comment.block.rocq-code-assistant.coq',
   TACTIC = 'meta.proof.body.tactic.coq',
   ADMIT = 'meta.proof.body.tactic.admit.coq',
   FOCUSING_CONSTRUCT = 'meta.proof.body.focus.coq',
@@ -20,4 +20,6 @@ export const enum Name {
   EXAMPLE = 'meta.comment.example.coq',
   HINT_KEYWORD = 'keyword.hint.coq',
   EXAMPLE_KEYWORD = 'keyword.example.coq',
+  EXAMPLE_PATH = 'meta.comment.example.path.coq',
+  EXAMPLE_NAME = 'meta.comment.example.name.coq'
 }

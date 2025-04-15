@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
-import { Name } from './scope';
+import * as fsp from 'fs/promises';
 import { Token } from './tokenizer';
+import { Tokenizer } from '../syntax/tokenizer';
+import { Name, Scope } from './scope';
 
-export function extractProofTokensFromName(proofName: string, tokens: Token[]) {
+export async function extractProofTokensFromName(proofName: string, filePath: string) {
+  const fileText = await fsp.readFile(filePath, 'utf8');
+  const tokens = await Tokenizer.get().tokenize(fileText, Scope.PROOF);
+  
   const nameToken = tokens.find(token => 
     token.scopes.includes(Name.PROOF) &&
     token.scopes.includes(Name.PROOF_NAME) &&
@@ -12,7 +17,10 @@ export function extractProofTokensFromName(proofName: string, tokens: Token[]) {
   else return extractProofTokensAroundToken(nameToken, tokens);
 }
 
-export function extractProofTokensFromPosition(position: vscode.Position, tokens: Token[]) {
+export async function extractProofTokensFromPosition(position: vscode.Position, filePath: string) {
+  const fileText = await fsp.readFile(filePath, 'utf8');
+  const tokens = await Tokenizer.get().tokenize(fileText, Scope.PROOF);
+
   const selectionToken = tokens.find(token =>
     token.range.contains(position) &&
     token.scopes.includes(Name.PROOF));

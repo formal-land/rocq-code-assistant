@@ -69,8 +69,7 @@ describe('miniF2F benchmark', () => {
             throw new Error('No active text editor available.');
           }
           
-          const tokenizedText = await Tokenizer.get().tokenize(textEditor.document.getText(), Scope.PROOF);
-          const proofTokens = extractors.extractProofTokensFromName(theorem, tokenizedText);
+          const proofTokens = await extractors.extractProofTokensFromName(theorem, textEditor.document.uri.fsPath); 
           
           if (!proofTokens) {
             vscode.window.showErrorMessage('Theorem not found.');

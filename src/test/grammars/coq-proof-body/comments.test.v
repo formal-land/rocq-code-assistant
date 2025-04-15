@@ -11,11 +11,15 @@ Aenean quis vulputate libero, sit amet porta augue. Aenean vehicula non enim nec
 //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment.block.rocq-code-assistant.coq meta.comment.hint.coq - meta.comment.examples.coq 
 Aenean quis vulputate libero, sit amet porta augue.
 // <-------------------------------------------------- meta.comment.hint.coq
-@example Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ultricies laoreet faucibus.
+@example lorem#ipsum
 // <-------- comment.block.rocq-code-assistant.coq keyword.example.coq - meta.comment.example.coq meta.comment.hint.coq
-//       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.comment.example.coq  - meta.comment.hint.coq
+//       ^^^^^^^^^^^ meta.comment.example.coq - meta.comment.hint.coq
+//       ^^^^^ meta.comment.example.path.coq
+//             ^^^^^ meta.comment.example.name.coq
 Aenean quis vulputate libero, sit amet porta augue.
 // <-------------------------------------------------- comment.block.rocq-code-assistant.coq meta.comment.example.coq - meta.comment.hint.coq
+@example #ipsum
+//        ^^^^^ meta.comment.example.name.coq - meta.comment.example.path.coq
 *)
 admit.
 // <----- - comment.block.coq comment.block.rocq-code-assistant.coq  meta.comment.hint.coq meta.comment.examples.coq

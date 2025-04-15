@@ -31,7 +31,7 @@
       "name": "meta.comment.example.coq",
       "patterns": [
         {
-          "match": "\\S+#\\S+\\ *$",
+          "match": "(\\S+)?#\\S+\\ *$",
           "name": "markup.underline.link.coq"
         }
       ]

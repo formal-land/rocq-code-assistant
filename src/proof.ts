@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
+import path from 'path';
 import * as utils from './utils';
+import * as extractors from './syntax/extractors';
 import { Token, Tokenizer } from './syntax/tokenizer';
 import { PetState } from './lib/coq-lsp/types';
 import { CoqLSPClient, Request } from './coq-lsp-client';
@@ -21,7 +23,7 @@ export class Proof {
 
   private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
-      .sendRequest(Request.Petanque.start, { uri: metadata.uri, thm: name, pre_commands: null }, cancellationToken);
+      .sendRequest(Request.Petanque.start, { uri: vscode.Uri.file(metadata.filePath).toString(), thm: name, pre_commands: null }, cancellationToken);
     const workingBlock = new Proof.WorkingBlock(startingState, startingState, {});
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
@@ -45,7 +47,7 @@ export class Proof {
     return proof;
   }
 
-  static fromTokens(uri: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {
+  static async fromTokens(filePath: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {
     const keyword = tokens
       .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
       .map(token => token.value)
@@ -68,15 +70,15 @@ export class Proof {
       .filter(token => token.scopes.includes(Name.COMMENT));
     const commentsSplitIdx = commentsTokens
       .reduce((acc, token, idx) => token.value.endsWith('*)') ? [...acc, idx + 1] : acc, [] as number[]);
-    const comments = utils
+    const comments = await Promise.all(utils
       .split(commentsTokens, commentsSplitIdx)
-      .map(comment => {
+      .map(async comment => {
         let hintsTokens = comment
           .filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
         const hintsSplitIdx = hintsTokens
           .reduce((acc, token, idx) => token.scopes.includes(Name.HINT_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
         const hints = utils.split(hintsTokens, hintsSplitIdx)
-          .map(hint => hint
+          .map(hintTokens => hintTokens
             .slice(1)
             .map(token => token.value.trim()).join(' '));
 
@@ -84,13 +86,25 @@ export class Proof {
           .filter(token => token.scopes.includes(Name.EXAMPLE) || token.scopes.includes(Name.EXAMPLE_KEYWORD));
         const examplesSplitIdx = examplesTokens
           .reduce((acc, token, idx) => token.scopes.includes(Name.EXAMPLE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
-        const examples = utils.split(examplesTokens, examplesSplitIdx)
-          .map(example => example
-            .slice(1)
-            .map(token => token.value.trim()).join(' '));
+        const examples = await Promise.all(utils.split(examplesTokens, examplesSplitIdx)
+          .map(async exampleTokens => {
+            const exampleProofName = exampleTokens
+              .slice(1)
+              .filter(token => token.scopes.includes(Name.EXAMPLE_NAME))
+              .map(token => token.value.trim())
+              .join(' ');
+            const exampleFilePath = exampleTokens
+              .slice(1)
+              .filter(token => token.scopes.includes(Name.EXAMPLE_PATH))
+              .map(token => token.value.trim())
+              .join(' ');
+            const proofTokens = await extractors.extractProofTokensFromName(exampleProofName, path.join(filePath, exampleFilePath));
+            if (!proofTokens) throw new Error('error'); // TODO: better string
+            return proofTokens.map(token => token.value).join(' ');
+          }));
 
         return { hints, examples };
-      });
+      }));
 
     const editorLocation = new vscode.Range(
       tokens[0].range.start.line, 
@@ -98,7 +112,7 @@ export class Proof {
       tokens[tokens.length - 1].range.end.line, 
       tokens[tokens.length - 1].range.end.character);
         
-    return Proof.init(name, type, { keyword, uri, editorLocation, comments }, bodyTokens, cancellationToken);
+    return Proof.init(name, type, { keyword, filePath, editorLocation, comments }, bodyTokens, cancellationToken);
   }
 
   private merge(workingBlock: Proof.WorkingBlock) {
@@ -144,16 +158,19 @@ export namespace Proof {
     keyword: string,
 
     /**
-     * The uri of the file where the proof is defined.
+     * The path of the file where the proof is defined.
      */
-    uri: string, 
+    filePath: string, 
     
     /**
      * Location of the proof in the edited file.
      */
     editorLocation: vscode.Range,
 
-    comments?: { hints?: string[], examples?: string[] }[]
+    comments?: { 
+      hints?: string[], 
+      examples?: string[]
+    }[]
   }
 
   /**

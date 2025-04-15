@@ -54,7 +54,17 @@
     "example": {
       "begin": "(?<=@example)",
       "end": "(?=@(.)+|\\*\\))",
-      "name": "meta.comment.example.coq"
+      "name": "meta.comment.example.coq",
+      "patterns": [
+        {
+          "match": "(\\S+)?#(\\S+)\\ *$",
+          "name": "markup.underline.link.coq",
+          "captures": {
+            "1": { "name": "meta.comment.example.path.coq" },
+            "2": { "name": "meta.comment.example.name.coq" }
+          }
+        }
+      ]
     },
     "block_comment": {
       "applyEndPatternLast": 1,
