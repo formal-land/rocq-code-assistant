@@ -20,23 +20,38 @@ suite('Prompt3 Test Suite', () => {
           Token.Standard.FOCUSING_CONSTRUCT_TACTIC('tactic.')
         ],
         at: 2,
-        message:
-    `
-    Coq: In environment
-    X : Type
-    test : X -> bool
-    x : X
-    l : list X
-    IHl : forallb test l = true <-> All (fun x : X => test x = true) l
-    Hx : test x = true
-    Hl : All (fun x : X => test x = true) l
-    Unable to unify "true" with "test x && forallb test l".
-    `
+        message: `\
+Coq: In environment
+X : Type
+test : X -> bool
+x : X
+l : list X
+IHl : forallb test l = true <-> All (fun x : X => test x = true) l
+Hx : test x = true
+Hl : All (fun x : X => test x = true) l
+Unable to unify "true" with "test x && forallb test l".`
       }],
       hints: [
         'Use the tactic `tactic1` to solve the goal.',
         'Use the tactic `tactic2` to solve the goal.',
-        'Use the tactic `tactic3` to solve the goal.']
+        'Use the tactic `tactic3` to solve the goal.'],
+      examples: [`\
+Theorem restricted_excluded_middle : forall P b,
+  (P <-> b = true) -> P \/ ~ P.
+Proof.
+  intros P [] H.
+  - left. rewrite H. reflexivity.
+  - right. rewrite H. intros contra. discriminate contra.
+Qed.`, `\
+Theorem restricted_excluded_middle_eq : forall (n m : nat),
+  n = m \/ n <> m.
+Proof.
+  intros n m.
+  apply (restricted_excluded_middle (n = m) (n =? m)).
+  symmetry.
+  apply eqb_eq.
+Qed.`
+      ]
     };
 
     const messages = prompt3.render(params);

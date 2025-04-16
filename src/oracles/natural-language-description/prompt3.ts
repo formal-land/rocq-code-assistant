@@ -24,6 +24,14 @@ Translate the natural language description of the proof in Coq code.
 These hints may help you to solve the goal. Please, use them if you find them useful.
 ${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
 
+  const examplesListPart = params?.examples
+    ?.map(example => `- ${ example}`)
+    .join('\n');
+
+  const examplesPart = LanguageModelChatMessage.User(`\
+These examples may help you to solve the goal. Please, use them if you find them useful.
+${examplesListPart}`);
+
   const errorHistoryListPart = params?.errorHistory
     ?.map(({ tactics, at,  message }, idx) => `- Solution ${ idx + 1 }:
   + tactics: ${
@@ -43,6 +51,7 @@ ${errorHistoryListPart}`);
 
   messages.push(introPart);
   if (hintsListPart) messages.push(hintsPart);
+  if (examplesListPart) messages.push(examplesPart);
   if (errorHistoryListPart) messages.push(errorHistoryPart);
 
   return messages;

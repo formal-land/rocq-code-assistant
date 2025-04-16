@@ -399,7 +399,7 @@ export namespace Proof {
      * Metadata for a {@link WorkingBlock}. 
      */
     export interface Metadata {
-      hints: string[], 
+      hints: string[],
       examples: string[]
     }
 
