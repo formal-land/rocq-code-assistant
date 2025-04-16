@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
-import path from 'path';
-import * as utils from './utils';
-import * as extractors from './syntax/extractors';
-import { Token, Tokenizer } from './syntax/tokenizer';
-import { PetState } from './lib/coq-lsp/types';
-import { CoqLSPClient, Request } from './coq-lsp-client';
-import { Name, Scope } from './syntax/scope';
-import { Oracle } from './oracles/oracle';
+import * as utils from '../utils';
+import { Token, Tokenizer } from '../syntax/tokenizer';
+import { PetState } from '../lib/coq-lsp/types';
+import { CoqLSPClient, Request } from '../coq-lsp-client';
+import { Name, Scope } from '../syntax/scope';
+import { Oracle } from '../oracles/oracle';
+import { Comment } from './comment';
 
 export class Proof {
   readonly name: string;
@@ -24,7 +23,7 @@ export class Proof {
   private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
       .sendRequest(Request.Petanque.start, { uri: vscode.Uri.file(metadata.filePath).toString(), thm: name, pre_commands: null }, cancellationToken);
-    const workingBlock = new Proof.WorkingBlock(startingState, startingState, {});
+    const workingBlock = new Proof.WorkingBlock(startingState, startingState, { hints: [], examples: [] });
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
     
@@ -40,14 +39,14 @@ export class Proof {
     proof.body
       .filter(element => element instanceof Proof.WorkingBlock)
       .forEach((element, idx) => element.metadata = {
-        hints: proof.metadata.comments?.at(idx)?.hints,
-        examples: proof.metadata.comments?.at(idx)?.examples
+        hints: proof.metadata.comments[idx] ? proof.metadata.comments[idx].hints : [],
+        examples: proof.metadata.comments[idx] ? proof.metadata.comments[idx].examples : []
       });
 
     return proof;
   }
 
-  static async fromTokens(filePath: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {
+  static async fromTokens(filePath: string, tokens: Token[], cancellationToken?: vscode.CancellationToken, ignoreComments: boolean = false) {
     const keyword = tokens
       .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
       .map(token => token.value)
@@ -70,42 +69,23 @@ export class Proof {
       .filter(token => token.scopes.includes(Name.COMMENT));
     const commentsSplitIdx = commentsTokens
       .reduce((acc, token, idx) => token.value.endsWith('*)') ? [...acc, idx + 1] : acc, [] as number[]);
-    const comments = await Promise.all(utils
-      .split(commentsTokens, commentsSplitIdx)
-      .map(async comment => {
-        let hintsTokens = comment
-          .filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
-        const hintsSplitIdx = hintsTokens
-          .reduce((acc, token, idx) => token.scopes.includes(Name.HINT_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
-        const hints = utils.split(hintsTokens, hintsSplitIdx)
-          .map(hintTokens => hintTokens
-            .slice(1)
-            .map(token => token.value.trim()).join(' '));
+    const splitCommentsTokens = utils.split(commentsTokens, commentsSplitIdx);
+    const comments = await Promise.all(tokens
+      .filter(token => token.scopes.includes(Name.ADMIT))
+      .map(admitToken => {
+        const associatedComment = splitCommentsTokens.find(commentTokens => {
+          const lastCommentTokenIdx = tokens.indexOf(commentTokens[commentTokens.length -1]);
+          const admitTokenIdx = tokens.indexOf(admitToken);
+            
+          return lastCommentTokenIdx < admitTokenIdx && 
+            !tokens
+              .slice(lastCommentTokenIdx, admitTokenIdx)
+              .some(token => token.scopes.includes(Name.TACTIC));
+        });
 
-        let examplesTokens = comment
-          .filter(token => token.scopes.includes(Name.EXAMPLE) || token.scopes.includes(Name.EXAMPLE_KEYWORD));
-        const examplesSplitIdx = examplesTokens
-          .reduce((acc, token, idx) => token.scopes.includes(Name.EXAMPLE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
-        const examples = await Promise.all(utils.split(examplesTokens, examplesSplitIdx)
-          .map(async exampleTokens => {
-            const exampleProofName = exampleTokens
-              .slice(1)
-              .filter(token => token.scopes.includes(Name.EXAMPLE_NAME))
-              .map(token => token.value.trim())
-              .join(' ');
-            const exampleFilePath = exampleTokens
-              .slice(1)
-              .filter(token => token.scopes.includes(Name.EXAMPLE_PATH))
-              .map(token => token.value.trim())
-              .join(' ');
-            const proofTokens = await extractors.extractProofTokensFromName(exampleProofName, path.join(filePath, exampleFilePath));
-            if (!proofTokens) throw new Error('error'); // TODO: better string
-            return proofTokens.map(token => token.value).join(' ');
-          }));
-
-        return { hints, examples };
+        return associatedComment ? Comment.fromTokens(associatedComment, filePath) : undefined;
       }));
-
+      
     const editorLocation = new vscode.Range(
       tokens[0].range.start.line, 
       tokens[0].range.start.character, 
@@ -167,10 +147,7 @@ export namespace Proof {
      */
     editorLocation: vscode.Range,
 
-    comments?: { 
-      hints?: string[], 
-      examples?: string[]
-    }[]
+    comments: (Comment | undefined)[]
   }
 
   /**
@@ -422,8 +399,8 @@ export namespace Proof {
      * Metadata for a {@link WorkingBlock}. 
      */
     export interface Metadata {
-      hints?: string[], 
-      examples?: string[]
+      hints: string[], 
+      examples: string[]
     }
 
     /**

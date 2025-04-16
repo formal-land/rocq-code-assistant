@@ -6,7 +6,7 @@ import { Commands } from '../../../extension';
 import { Tokenizer } from '../../../syntax/tokenizer';
 import { Scope } from '../../../syntax/scope';
 import * as extractors from '../../../syntax/extractors';
-import { Proof } from '../../../proof';
+import { Proof } from '../../../proof/proof';
 import { NaturalLanguageDescription } from '../../../oracles/natural-language-description/oracle';
 import { shuffle } from '../../../utils';
 

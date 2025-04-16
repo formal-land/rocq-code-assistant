@@ -5,7 +5,7 @@ import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import * as Prettier from './syntax/prettier/prettier';
 import { CoqLSPClient } from './coq-lsp-client';
-import { Proof } from './proof';
+import { Proof } from './proof/proof';
 import { NaturalLanguageDescription } from './oracles/natural-language-description/oracle';
 
 export namespace Commands {
