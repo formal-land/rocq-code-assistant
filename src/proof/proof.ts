@@ -23,7 +23,7 @@ export class Proof {
   private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
       .sendRequest(Request.Petanque.start, { uri: vscode.Uri.file(metadata.filePath).toString(), thm: name, pre_commands: null }, cancellationToken);
-    const workingBlock = new Proof.WorkingBlock(startingState, startingState, { hints: [], examples: [] });
+    const workingBlock = new Proof.WorkingBlock(startingState, startingState, { comment: { hints: [], examples: [] } });
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
     
@@ -38,7 +38,7 @@ export class Proof {
 
     proof.body
       .filter(element => element instanceof Proof.WorkingBlock)
-      .forEach((element, idx) => element.metadata = {
+      .forEach((element, idx) => element.metadata.comment = {
         hints: proof.metadata.comments[idx] ? proof.metadata.comments[idx].hints : [],
         examples: proof.metadata.comments[idx] ? proof.metadata.comments[idx].examples : []
       });
@@ -340,8 +340,7 @@ export namespace Proof {
       const answers = [];
       const oracleParams: Oracle.Params = {
         errorHistory: [],
-        hints: this.metadata.hints,
-        examples: this.metadata.examples
+        comment: this.metadata.comment
       };
       let attempts = 0;
       let goals;
@@ -399,8 +398,7 @@ export namespace Proof {
      * Metadata for a {@link WorkingBlock}. 
      */
     export interface Metadata {
-      hints: string[],
-      examples: string[]
+      comment: Comment
     }
 
     /**

@@ -31,7 +31,7 @@ ${goal.ty} ${hypotesisPart.length > 0 ? `
 You can use the following hypotesis: 
 ${hypotesisPart}` : ''}`);
 
-  const hintsListPart = params?.hints
+  const hintsListPart = params?.comment?.hints
     ?.map(hint => `- ${ hint.trim() }`);
   
   const hintsPart = LanguageModelChatMessage.User(`\

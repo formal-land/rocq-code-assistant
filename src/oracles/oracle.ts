@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Goal, PpString } from '../lib/coq-lsp/types';
 import { Token } from '../syntax/tokenizer';
 import { Model } from './model';
+import { Comment } from '../proof/comment';
 
 export abstract class Oracle {
   protected model: Model;
@@ -10,7 +11,7 @@ export abstract class Oracle {
     this.model = new Model(model);
   }
 
-  abstract query(goal: Goal<PpString>, params?: Oracle.Params, cancellationToken?: vscode.CancellationToken): Promise<string[]>
+  abstract query(goal: Goal<PpString>, params: Oracle.Params, cancellationToken?: vscode.CancellationToken): Promise<string[]>
 }
 
 export namespace Oracle {
@@ -19,7 +20,6 @@ export namespace Oracle {
       tactics: Token[],
       at: number,
       message?: string }[],
-    hints?: string[],
-    examples?: string[]
+    comment?: Comment
   }
 }

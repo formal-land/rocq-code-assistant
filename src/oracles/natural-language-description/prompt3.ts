@@ -17,14 +17,14 @@ Translate the natural language description of the proof in Coq code.
   all the variables and hypotheses names used in the Coq goal definition.
 - Format the solution in a Markdown code block that starts with \`\`\`coq and ends with \`\`\`.`);
 
-  const hintsListPart = params?.hints
+  const hintsListPart = params?.comment?.hints
     ?.map(hint => `- ${ hint.trim() }`);
   
   const hintsPart = LanguageModelChatMessage.User(`\
 These hints may help you to solve the goal. Please, use them if you find them useful.
 ${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
 
-  const examplesListPart = params?.examples
+  const examplesListPart = params?.comment?.examples
     ?.map(example => `- ${ example}`)
     .join('\n');
 
