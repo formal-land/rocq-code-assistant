@@ -346,8 +346,12 @@ export namespace Proof {
       let goals;
   
       while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
+        let repairable;
+
         if (answers.length === 0) {
-          answers.push(...await oracles[0].query(goals[0], oracleParams, cancellationToken));
+          if (attempts === 0) repairable = await oracles[0].query(goals[0], oracleParams, cancellationToken);
+          else repairable = await (<Oracle.Repairable>repairable).repair(oracleParams);
+          answers.push(...repairable.response);
           attempts++;
         }
         

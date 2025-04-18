@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as utils from '../utils';
 
-class Chat {
+export class Chat {
   private model: Model;
   private history: vscode.LanguageModelChatMessage[] = [];
   private cancellationToken?: vscode.CancellationToken;

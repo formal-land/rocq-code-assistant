@@ -11,7 +11,7 @@ export abstract class Oracle {
     this.model = new Model(model);
   }
 
-  abstract query(goal: Goal<PpString>, params: Oracle.Params, cancellationToken?: vscode.CancellationToken): Promise<string[]>
+  abstract query(goal: Goal<PpString>, params: Oracle.Params, cancellationToken?: vscode.CancellationToken): Promise<Oracle.Repairable>
 }
 
 export namespace Oracle {
@@ -21,5 +21,10 @@ export namespace Oracle {
       at: number,
       message?: string }[],
     comment?: Comment
+  }
+
+  export interface Repairable {
+    response: string[],
+    repair(params: Oracle.Params): Promise<Oracle.Repairable>
   }
 }
