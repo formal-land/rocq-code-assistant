@@ -58,6 +58,18 @@ export class Stack<T> {
     this.push(...stack.items);
   }
 }
+
+export function languageModelChatMessageToString(message: vscode.LanguageModelChatMessage) {
+  return message.content
+    .map(part => {
+      if (part instanceof vscode.LanguageModelTextPart)
+        return part.value;
+      else 
+        throw Error('Message type not supported');
+    })
+    .join('');
+}
+
 export function languageModelChatMessagesToString(messages: vscode.LanguageModelChatMessage[]) {
   return messages
     .flatMap(message =>

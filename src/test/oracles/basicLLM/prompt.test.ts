@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as utils from '../../../utils';
-import * as prompt from '../../../oracles/basic-LLM/prompt';
+import * as prompt1 from '../../../oracles/basic-LLM/prompt1';
 import { Token } from '../../../syntax/tokenizer';
 
 suite('Extension Test Suite', () => {
@@ -51,7 +51,7 @@ Unable to unify "true" with "test x && forallb test l".
         'Use the tactic `tactic3` to solve the goal.',]
     };
 
-    const messages = prompt.render(goal, params);
+    const messages = prompt1.render(goal);
 
     assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });
@@ -92,7 +92,7 @@ Unable to unify "true" with "test x && forallb test l".
       }]
     };
 
-    const messages = prompt.render(goal, params);
+    const messages = prompt1.render(goal);
 
     assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });
@@ -114,7 +114,7 @@ Unable to unify "true" with "test x && forallb test l".
       errorHistory: []
     };
 
-    const messages = prompt.render(goal, params);
+    const messages = prompt1.render(goal);
 
     assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });
@@ -132,7 +132,7 @@ Unable to unify "true" with "test x && forallb test l".
       ]
     };
 
-    const messages = prompt.render(goal);
+    const messages = prompt1.render(goal);
 
     assert.fail('\n' + utils.languageModelChatMessagesToString(messages));
   });
