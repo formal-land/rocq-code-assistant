@@ -24,8 +24,8 @@ These hints may help you to solve the goal. Please, use them if you find them us
 ${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
 
   const examplesListPart = params?.comment?.examples
-    ?.map(example => `- ${ example}`)
-    .join('\n');
+    ?.map(example => `- ${ example }`)
+    .join('\n\n');
 
   const examplesPart = LanguageModelChatMessage.User(`\
 These examples may help you to solve the goal. Please, use them if you find them useful.

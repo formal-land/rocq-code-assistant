@@ -17,6 +17,16 @@ export default defineConfig(
       }
     },
     {
+      label: 'chat - Natural language description',
+      files: 'out/test/oracles/natural-language-description/chat.test.js',
+      args: [
+        '"--disable-extensions"'
+      ],
+      mocha: {
+        timeout: 0
+      }
+    },
+    {
       label: 'prompt1 - Natural language description',
       files: 'out/test/oracles/natural-language-description/prompt1.test.js',
       args: [

@@ -16,15 +16,16 @@ export abstract class Oracle {
 
 export namespace Oracle {
   export interface Params {
-    errorHistory?: { 
-      tactics: Token[],
-      at: number,
-      message?: string }[],
     comment?: Comment
   }
 
+  export interface Error {
+    at: number,
+    message?: string
+  }
+
   export interface Repairable {
-    response: string[],
-    repair(params: Oracle.Params): Promise<Oracle.Repairable>
+    response: Token[],
+    repair(error: Oracle.Error): Promise<Oracle.Repairable>
   }
 }

@@ -339,31 +339,29 @@ export namespace Proof {
       const MAX_ATTEMPTS = 3;
       const answers = [];
       const oracleParams: Oracle.Params = {
-        errorHistory: [],
         comment: this.metadata.comment
       };
       let attempts = 0;
       let goals;
+      let error: Oracle.Error = { at: 0, message: '' };
   
       while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
         let repairable;
 
         if (answers.length === 0) {
           if (attempts === 0) repairable = await oracles[0].query(goals[0], oracleParams, cancellationToken);
-          else repairable = await (<Oracle.Repairable>repairable).repair(oracleParams);
-          answers.push(...repairable.response);
+          else repairable = await (<Oracle.Repairable>repairable).repair(error);
+          answers.push(repairable.response);
           attempts++;
         }
         
         const answer = answers.pop();
         if (answer) {
-          const tokens = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-          const tryResult = await this.try(tokens, cancellationToken);
+          const tryResult = await this.try(answer, cancellationToken);
           if (!tryResult.status)
-            oracleParams.errorHistory?.push({ 
-              tactics: this.pendings().flatMap(element => element.tokens()),
+            error = { 
               at: tryResult.error.at, 
-              message: tryResult.error.message });
+              message: tryResult.error.message };
           if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
             this.accept();
           else

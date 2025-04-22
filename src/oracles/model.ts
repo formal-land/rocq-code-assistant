@@ -23,7 +23,7 @@ export class Chat {
     this.history.push(...newMessages, response);
   }
 
-  close() {
+  return() {
     return this.history;
   }
 }
