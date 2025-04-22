@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as utils from '../utils';
 
-class Chat<T extends Model> {
-  private model: T;
+export class Chat {
+  private model: Model;
   private history: vscode.LanguageModelChatMessage[] = [];
   private cancellationToken?: vscode.CancellationToken;
 
-  constructor(model: T, history: vscode.LanguageModelChatMessage[] = [], cancellationToken?: vscode.CancellationToken) {
+  constructor(model: Model, history: vscode.LanguageModelChatMessage[] = [], cancellationToken?: vscode.CancellationToken) {
     this.history = history;
     this.model = model;
     this.cancellationToken = cancellationToken;
@@ -23,7 +23,7 @@ class Chat<T extends Model> {
     this.history.push(...newMessages, response);
   }
 
-  close() {
+  return() {
     return this.history;
   }
 }
@@ -36,7 +36,7 @@ export class Model {
   }
 
   async sendRequest(messages: vscode.LanguageModelChatMessage[], cancellationToken?: vscode.CancellationToken) {
-    // console.log(utils.languageModelChatMessagesToString(messages));
+    console.log(utils.languageModelChatMessagesToString(messages));
     const rawResponse = await this.model.sendRequest(messages, {}, cancellationToken);
     const fragments = [];
     for await (const fragment of rawResponse.text)

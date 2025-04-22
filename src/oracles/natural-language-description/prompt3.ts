@@ -1,6 +1,5 @@
 import { LanguageModelChatMessage } from 'vscode';
 import { Oracle } from '../oracle';
-import { Name } from '../../syntax/scope';
 
 export function render(params?: Oracle.Params) {
   const messages: LanguageModelChatMessage[] = [];
@@ -17,25 +16,24 @@ Translate the natural language description of the proof in Coq code.
   all the variables and hypotheses names used in the Coq goal definition.
 - Format the solution in a Markdown code block that starts with \`\`\`coq and ends with \`\`\`.`);
 
-  const errorHistoryListPart = params?.errorHistory
-    ?.map(({ tactics, at,  message }, idx) => `- Solution ${ idx + 1 }:
-  + tactics: ${
-  tactics.reduce((str, tactic, idx) =>
-    str + 
-      (idx === at ? `<<< ${tactic.value} >>>` : tactic.value) + 
-      (tactic.scopes.includes(Name.FOCUSING_CONSTRUCT) ? ' ' : '\n\t'), '\n\t')
-}
-  + error: ${ message?.trim().replaceAll('\n', `\n${' '.repeat('- error: '.length)}`) }`)
-    .join('\n');
+  const hintsListPart = params?.comment?.hints
+    ?.map(hint => `- ${ hint.trim() }`);
+  
+  const hintsPart = LanguageModelChatMessage.User(`\
+These hints may help you to solve the goal. Please, use them if you find them useful.
+${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
 
-  const errorHistoryPart = LanguageModelChatMessage.User(`\
-These solutions have already been tried and they do not work. Please, avoid them. 
-For each of them, the tactic where it failed is put between triple angle brackets \`<<< >>>\` and a\
-description of the error is provided.
-${errorHistoryListPart}`);
+  const examplesListPart = params?.comment?.examples
+    ?.map(example => `- ${ example }`)
+    .join('\n\n');
+
+  const examplesPart = LanguageModelChatMessage.User(`\
+These examples may help you to solve the goal. Please, use them if you find them useful.
+${examplesListPart}`);
 
   messages.push(introPart);
-  if (errorHistoryListPart) messages.push(errorHistoryPart);
+  if (hintsListPart) messages.push(hintsPart);
+  if (examplesListPart) messages.push(examplesPart);
 
   return messages;
 }

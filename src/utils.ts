@@ -27,6 +27,13 @@ export function zip<T, U>(first: Array<T>, second: Array<U>): Array<[T, U]> {
   return zipped;
 }
 
+export function split<T>(array: T[], at: number[]) {
+  const leftIdx = [0, ...at];
+  const rightIdx = [...at, array.length];
+  const pairSplitIdx = zip(leftIdx, rightIdx).filter(([start, end]) => start !== end);
+  return pairSplitIdx.map(([start, end]) => array.slice(start, end));
+}
+
 export class Stack<T> {
   readonly items: T[] = [];
   
@@ -51,6 +58,18 @@ export class Stack<T> {
     this.push(...stack.items);
   }
 }
+
+export function languageModelChatMessageToString(message: vscode.LanguageModelChatMessage) {
+  return message.content
+    .map(part => {
+      if (part instanceof vscode.LanguageModelTextPart)
+        return part.value;
+      else 
+        throw Error('Message type not supported');
+    })
+    .join('');
+}
+
 export function languageModelChatMessagesToString(messages: vscode.LanguageModelChatMessage[]) {
   return messages
     .flatMap(message =>

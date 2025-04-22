@@ -1,0 +1,81 @@
+{
+  "fileTypes": ["v"],
+  "name": "Coq proofs body",
+  "patterns": [
+    { "include": "#tactic" },
+    { "include": "#focusing_construct" },
+    { "include": "#rocq_code_assistant_block_comment"},
+    { "include": "#block_comment" }
+  ],
+  "repository": {
+    "tactic": {
+      "begin": "(?=[a-zA-Z]|_|\\p{L})",
+      "end": "(?<=\\.)(?!\\S)",
+      "name": "meta.proof.body.tactic.coq meta.proof.body.executable.coq",
+      "patterns": [
+        { "include": "#admits" }
+      ]
+    },
+    "admits": {
+      "begin": "(?=admit)",
+      "end": "(?<=\\.|;)(?!\\S)",
+      "name": "meta.proof.body.tactic.admit.coq"
+    },
+    "focusing_construct": {
+      "match": "(?<!\\w)([-\\+\\*\\{\\}])(?!\\w)",
+      "name": "meta.proof.body.focus.coq meta.proof.body.executable.coq"
+    },
+    "rocq_code_assistant_block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.rocq-code-assistant.coq",
+      "patterns": [
+        { "include": "#rocq_code_assistant_block_comment" },
+        { "include": "#hint-keyword" },
+        { "include": "#example-keyword" },
+        { "include": "#hint" },
+        { "include": "#example" }
+      ]
+    },
+    "hint-keyword": {
+      "match": "@hint",
+      "name": "keyword.hint.coq"
+    },
+    "example-keyword": {
+      "match": "@example",
+      "name": "keyword.example.coq"
+    },
+    "hint": {
+      "begin": "(?<=@hint)",
+      "end": "(?=@(.)+|\\*\\))",
+      "name": "meta.comment.hint.coq"
+    },
+    "example": {
+      "begin": "(?<=@example)",
+      "end": "(?=@(.)+|\\*\\))",
+      "name": "meta.comment.example.coq",
+      "patterns": [
+        {
+          "match": "(\\S+)?#(\\S+)\\ *$",
+          "name": "markup.underline.link.coq",
+          "captures": {
+            "1": { "name": "meta.comment.example.path.coq" },
+            "2": { "name": "meta.comment.example.name.coq" }
+          }
+        }
+      ]
+    },
+    "block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.coq",
+      "patterns": [
+        { "include": "#block_comment" }
+      ]
+    }
+  },
+  "scopeName": "source.coq.proof.body",
+  "uuid": "3fd2630c-19d6-4101-afa3-2b73ffc87bb2"
+}

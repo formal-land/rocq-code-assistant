@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
-import { Name } from './scope';
+import * as fsp from 'fs/promises';
 import { Token } from './tokenizer';
+import { Tokenizer } from '../syntax/tokenizer';
+import { Name, Scope } from './scope';
 
-export function extractProofTokensFromName(proofName: string, tokens: Token[]) {
+export async function extractProofTokensFromName(proofName: string, filePath: string) {
+  const fileText = await fsp.readFile(filePath, 'utf8');
+  const tokens = await Tokenizer.get().tokenize(fileText, Scope.PROOF);
+  
   const nameToken = tokens.find(token => 
     token.scopes.includes(Name.PROOF) &&
     token.scopes.includes(Name.PROOF_NAME) &&
@@ -12,7 +17,10 @@ export function extractProofTokensFromName(proofName: string, tokens: Token[]) {
   else return extractProofTokensAroundToken(nameToken, tokens);
 }
 
-export function extractProofTokensFromPosition(position: vscode.Position, tokens: Token[]) {
+export async function extractProofTokensFromPosition(position: vscode.Position, filePath: string) {
+  const fileText = await fsp.readFile(filePath, 'utf8');
+  const tokens = await Tokenizer.get().tokenize(fileText, Scope.PROOF);
+
   const selectionToken = tokens.find(token =>
     token.range.contains(position) &&
     token.scopes.includes(Name.PROOF));
@@ -22,6 +30,8 @@ export function extractProofTokensFromPosition(position: vscode.Position, tokens
 }
 
 function extractProofTokensAroundToken(baseToken: Token, tokens: Token[]) {
+  const extractedTokens = [];
+
   const baseTokenIdx = tokens.indexOf(baseToken);
 
   const firstProofTokenIdx = tokens.findLastIndex((token, idx) => 
@@ -33,5 +43,22 @@ function extractProofTokensAroundToken(baseToken: Token, tokens: Token[]) {
     !token.scopes.includes(Name.PROOF)) - 1;
   if (lastProofTokenIdx < 0) lastProofTokenIdx = tokens.length - 1;
 
-  return tokens.slice(firstProofTokenIdx, lastProofTokenIdx + 1);
+  const lastCommentTokenIdx = tokens.findLastIndex((token, idx) =>
+    idx <= firstProofTokenIdx &&
+    token.scopes.includes(Name.COMMENT));
+
+  const firstCommentTokenIdx = tokens.findLastIndex((token, idx) =>
+    idx <= lastCommentTokenIdx &&
+    !token.scopes.includes(Name.COMMENT)) + 1;
+
+  const existsAssociatedComment = !tokens.some((token, idx) =>
+    idx > lastCommentTokenIdx &&
+    idx < firstProofTokenIdx &&
+    token.value !== '');
+
+  if (existsAssociatedComment)
+    extractedTokens.push(...tokens.slice(firstCommentTokenIdx, lastCommentTokenIdx + 1));
+  extractedTokens.push(...tokens.slice(firstProofTokenIdx, lastProofTokenIdx + 1));
+
+  return extractedTokens;
 }

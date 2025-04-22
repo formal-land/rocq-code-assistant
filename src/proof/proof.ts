@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
-import { Token, Tokenizer } from './syntax/tokenizer';
-import { PetState } from './lib/coq-lsp/types';
-import { CoqLSPClient, Request } from './coq-lsp-client';
-import { Name, Scope } from './syntax/scope';
-import { Oracle } from './oracles/oracle';
+import * as utils from '../utils';
+import { Token, Tokenizer } from '../syntax/tokenizer';
+import { PetState } from '../lib/coq-lsp/types';
+import { CoqLSPClient, Request } from '../coq-lsp-client';
+import { Name, Scope } from '../syntax/scope';
+import { Oracle } from '../oracles/oracle';
+import { Comment } from './comment';
 
 export class Proof {
   readonly name: string;
@@ -20,10 +22,11 @@ export class Proof {
 
   private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
-      .sendRequest(Request.Petanque.start, { uri: metadata.uri, thm: name, pre_commands: null }, cancellationToken);
-    const workingBlock = new Proof.WorkingBlock(startingState, startingState);
+      .sendRequest(Request.Petanque.start, { uri: vscode.Uri.file(metadata.filePath).toString(), thm: name, pre_commands: null }, cancellationToken);
+    const workingBlock = new Proof.WorkingBlock(startingState, startingState, { comment: { hints: [], examples: [] } });
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
+    
     if (tryResult.status) {
       workingBlock.accept();
       proof.merge(workingBlock);
@@ -32,10 +35,18 @@ export class Proof {
       throw new Error('Proof contains errors.');
       // TODO: workingBlock.repair();
     }
+
+    proof.body
+      .filter(element => element instanceof Proof.WorkingBlock)
+      .forEach((element, idx) => element.metadata.comment = {
+        hints: proof.metadata.comments[idx] ? proof.metadata.comments[idx].hints : [],
+        examples: proof.metadata.comments[idx] ? proof.metadata.comments[idx].examples : []
+      });
+
     return proof;
   }
 
-  static fromTokens(uri: string, tokens: Token[], cancellationToken?: vscode.CancellationToken) {
+  static async fromTokens(filePath: string, tokens: Token[], cancellationToken?: vscode.CancellationToken, ignoreComments: boolean = false) {
     const keyword = tokens
       .filter(token => token.scopes.includes(Name.PROOF_TOKEN))
       .map(token => token.value)
@@ -53,6 +64,27 @@ export class Proof {
       
     const bodyTokens = tokens
       .filter(token => token.scopes.includes(Name.PROOF_BODY));
+
+    const commentsTokens = tokens
+      .filter(token => token.scopes.includes(Name.COMMENT));
+    const commentsSplitIdx = commentsTokens
+      .reduce((acc, token, idx) => token.value.endsWith('*)') ? [...acc, idx + 1] : acc, [] as number[]);
+    const splitCommentsTokens = utils.split(commentsTokens, commentsSplitIdx);
+    const comments = await Promise.all(tokens
+      .filter(token => token.scopes.includes(Name.ADMIT))
+      .map(admitToken => {
+        const associatedComment = splitCommentsTokens.find(commentTokens => {
+          const lastCommentTokenIdx = tokens.indexOf(commentTokens[commentTokens.length -1]);
+          const admitTokenIdx = tokens.indexOf(admitToken);
+            
+          return lastCommentTokenIdx < admitTokenIdx && 
+            !tokens
+              .slice(lastCommentTokenIdx, admitTokenIdx)
+              .some(token => token.scopes.includes(Name.TACTIC));
+        });
+
+        return associatedComment ? Comment.fromTokens(associatedComment, filePath) : undefined;
+      }));
       
     const editorLocation = new vscode.Range(
       tokens[0].range.start.line, 
@@ -60,7 +92,7 @@ export class Proof {
       tokens[tokens.length - 1].range.end.line, 
       tokens[tokens.length - 1].range.end.character);
         
-    return Proof.init(name, type, { keyword, uri, editorLocation }, bodyTokens, cancellationToken);
+    return Proof.init(name, type, { keyword, filePath, editorLocation, comments }, bodyTokens, cancellationToken);
   }
 
   private merge(workingBlock: Proof.WorkingBlock) {
@@ -106,14 +138,16 @@ export namespace Proof {
     keyword: string,
 
     /**
-     * The uri of the file where the proof is defined.
+     * The path of the file where the proof is defined.
      */
-    uri: string, 
+    filePath: string, 
     
     /**
      * Location of the proof in the edited file.
      */
-    editorLocation: vscode.Range
+    editorLocation: vscode.Range,
+
+    comments: (Comment | undefined)[]
   }
 
   /**
@@ -182,6 +216,7 @@ export namespace Proof {
    */
   export class WorkingBlock extends Element {
     readonly elements: WorkingBlock.Element[];
+    metadata: WorkingBlock.Metadata;
   
     /**
      * @param petState A Petanque state that represents, from the outside, a global successfull 
@@ -189,9 +224,10 @@ export namespace Proof {
      * @param startingState A Petanque state that is used as the starting execution point of the 
      * tokens added to the block.
      */
-    constructor(petState: PetState, startingState: PetState) {
+    constructor(petState: PetState, startingState: PetState, metadata: WorkingBlock.Metadata) {
       super(petState);
       this.elements = [ new WorkingBlock.StartToken(startingState) ];
+      this.metadata = metadata;
     }
 
     /**
@@ -263,7 +299,7 @@ export namespace Proof {
      * @returns A list of {@link Element} where admit are substitued by new {@link WorkingBlock}.
      */
     templatize() {
-      return this.elements.flatMap(element => element.templatize());
+      return this.elements.flatMap(element => element.templatize(this.metadata));
     }
 
     /**
@@ -303,26 +339,29 @@ export namespace Proof {
       const MAX_ATTEMPTS = 3;
       const answers = [];
       const oracleParams: Oracle.Params = {
-        errorHistory: []
+        comment: this.metadata.comment
       };
       let attempts = 0;
       let goals;
+      let error: Oracle.Error = { at: 0, message: '' };
   
       while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
+        let repairable;
+
         if (answers.length === 0) {
-          answers.push(...await oracles[0].query(goals[0], oracleParams, cancellationToken));
+          if (attempts === 0) repairable = await oracles[0].query(goals[0], oracleParams, cancellationToken);
+          else repairable = await (<Oracle.Repairable>repairable).repair(error);
+          answers.push(repairable.response);
           attempts++;
         }
         
         const answer = answers.pop();
         if (answer) {
-          const tokens = await Tokenizer.get().tokenize(answer, Scope.PROOF_BODY);
-          const tryResult = await this.try(tokens, cancellationToken);
+          const tryResult = await this.try(answer, cancellationToken);
           if (!tryResult.status)
-            oracleParams.errorHistory?.push({ 
-              tactics: this.pendings().flatMap(element => element.tokens()),
+            error = { 
               at: tryResult.error.at, 
-              message: tryResult.error.message });
+              message: tryResult.error.message };
           if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
             this.accept();
           else
@@ -357,6 +396,13 @@ export namespace Proof {
 
   export namespace WorkingBlock {
 
+    /** 
+     * Metadata for a {@link WorkingBlock}. 
+     */
+    export interface Metadata {
+      comment: Comment
+    }
+
     /**
      * Extension of {@link Proof.Element} to allow incremental build of a proof.
      */
@@ -382,7 +428,7 @@ export namespace Proof {
       /**
        * Generates a templatized version of this element.
        */
-      abstract templatize(): Proof.Element[];
+      abstract templatize(metadata: WorkingBlock.Metadata): Proof.Element[];
     }
 
     /**
@@ -419,9 +465,9 @@ export namespace Proof {
        * returns a new {@link WorkingBlock} TODO:!
        * @returns 
        */
-      templatize() {
+      templatize(metadata: WorkingBlock.Metadata) {
         if (this.petState && this.prePetState && this.token.scopes.includes(Name.ADMIT))
-          return [ new WorkingBlock(this.petState, this.prePetState) ];
+          return [ new WorkingBlock(this.petState, this.prePetState, metadata) ];
         else 
           return [ new Proof.SingleToken(this.token, this.petState) ];
       }

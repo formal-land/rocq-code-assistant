@@ -4,11 +4,8 @@ import * as ollama from './model-providers/ollama';
 import * as openAI from './model-providers/openai';
 import * as extractors from './syntax/extractors';
 import * as Prettier from './syntax/prettier/prettier';
-import { Tokenizer } from './syntax/tokenizer';
 import { CoqLSPClient } from './coq-lsp-client';
-import { Scope } from './syntax/scope';
-import { Proof } from './proof';
-import { BasicLLM } from './oracles/basic-LLM/oracle';
+import { Proof } from './proof/proof';
 import { NaturalLanguageDescription } from './oracles/natural-language-description/oracle';
 
 export namespace Commands {
@@ -82,18 +79,16 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
     throw new Error('No active text editor available.');
   }
 
-  const tokenizedText = await Tokenizer.get().tokenize(textEditor.document.getText(), Scope.PROOF);
-
   const proofTokens = proofName ?
-    extractors.extractProofTokensFromName(proofName, tokenizedText) :
-    extractors.extractProofTokensFromPosition(textEditor.selection.active, tokenizedText);
+    await extractors.extractProofTokensFromName(proofName, textEditor.document.uri.fsPath) :
+    await extractors.extractProofTokensFromPosition(textEditor.selection.active, textEditor.document.uri.fsPath);
 
   if (!proofTokens) {
     vscode.window.showErrorMessage('Theorem not found.');
     throw new Error('Theorem not found.');
   }
 
-  const proof = await Proof.fromTokens(resource ? resource.toString() : textEditor.document.uri.toString(), proofTokens, cancellationToken);
+  const proof = await Proof.fromTokens(resource ? resource.fsPath : textEditor.document.uri.fsPath, proofTokens, cancellationToken);
   const success = await proof.autocomplete([new NaturalLanguageDescription(selectedModel as vscode.LanguageModelChat)], cancellationToken);
   const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
   return { proof, ppProof, success };

@@ -15,6 +15,13 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "grammars": [
+      {
+        "path": "./syntaxes/rocq-code-assistant-keywords.json",
+        "scopeName": "rocq-code-assistant-keywords.injection",
+        "injectTo": ["source.coq"]
+      }
+    ],
     "commands": [
       {
         "command": "rocq-coding-assistant.hello-world",

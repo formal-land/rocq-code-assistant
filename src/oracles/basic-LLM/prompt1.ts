@@ -31,26 +31,16 @@ ${goal.ty} ${hypotesisPart.length > 0 ? `
 You can use the following hypotesis: 
 ${hypotesisPart}` : ''}`);
 
-  const errorHistoryListPart = params?.errorHistory
-    ?.map(({ tactics, at,  message }, idx) => `* Solution ${ idx + 1 }:
-\t- tactics: ${
-  tactics.reduce((str, tactic, idx) =>
-    str + 
-    (idx === at ? `<<< ${tactic.value} >>>` : tactic.value) + 
-    (tactic.scopes.includes(Name.FOCUSING_CONSTRUCT) ? ' ' : '\n\t\t'), '\n\t\t')
-}
-\t- error: ${ message?.trim().replaceAll('\n', `\n\t${' '.repeat('- error: '.length)}`) }`)
-    .join('\n');
-
-  const errorHistoryPart = LanguageModelChatMessage.User(`\
-These solutions have already been tried and they do not work. Please, avoid them. 
-For each of them, the tactic where it failed is put between triple angle brackets \`<<< >>>\` and a \ 
-description of the error is provided.
-${errorHistoryListPart}`);
+  const hintsListPart = params?.comment?.hints
+    ?.map(hint => `- ${ hint.trim() }`);
+  
+  const hintsPart = LanguageModelChatMessage.User(`\
+These hints may help you to solve the goal. Please, use them if you find them useful.
+${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
 
   messages.push(introPart);
   messages.push(goalPart);
-  if (errorHistoryListPart) messages.push(errorHistoryPart);
+  if (hintsListPart) messages.push(hintsPart);
   
   return messages;
 }

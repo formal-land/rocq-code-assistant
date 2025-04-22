@@ -1,0 +1,40 @@
+{
+  "scopeName": "rocq-code-assistant-keywords.injection",
+  "injectionSelector": "L:source.coq",
+  "patterns": [
+    { "include": "#rocq_code_assistant_block_comment" }
+  ],
+  "repository": {
+    "rocq_code_assistant_block_comment": {
+      "applyEndPatternLast": 1,
+      "begin": "\\(\\*\\*(?!#)",
+      "end": "\\*\\)",
+      "name": "comment.block.rocq-code-assistant.coq",
+      "patterns": [
+        { "include": "#rocq_code_assistant_block_comment" },
+        { "include": "#hint-keyword" },
+        { "include": "#example-keyword" },
+        { "include": "#example" }
+      ]
+    },
+    "hint-keyword": {
+      "match": "@hint",
+      "name": "keyword.hint.coq"
+    },
+    "example-keyword": {
+      "match": "@example",
+      "name": "keyword.example.coq"
+    },
+    "example": {
+      "begin": "(?<=@example)",
+      "end": "(?=@(.)+|\\*\\))",
+      "name": "meta.comment.example.coq",
+      "patterns": [
+        {
+          "match": "(\\S+)?#\\S+\\ *$",
+          "name": "markup.underline.link.coq"
+        }
+      ]
+    }
+  }
+}

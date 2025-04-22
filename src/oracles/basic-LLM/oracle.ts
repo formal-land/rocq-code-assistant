@@ -1,17 +1,47 @@
 import * as vscode from 'vscode';
 import { Goal, PpString } from '../../lib/coq-lsp/types';
 import * as utils from '../../utils';
-import * as prompt from './prompt';
+import * as prompt1 from './prompt1';
+import * as prompt2 from './prompt2';
 import { Oracle } from '../oracle';
+import { Token, Tokenizer } from '../../syntax/tokenizer';
+import { Scope } from '../../syntax/scope';
+import { Chat } from '../model';
 
 export class BasicLLM extends Oracle {
   async query(goal: Goal<PpString>, params?: Oracle.Params, cancellationToken?: vscode.CancellationToken) {
-    const messages = prompt.render(goal, params);
-    const rawResponse = await this.model.sendRequest(messages, cancellationToken);
-    const rawResponseText = utils.languageModelChatMessagesToString([rawResponse]);
+    const chat = this.model.chat(cancellationToken);
+    await chat.continue(() => prompt1.render(goal, params));
+    
+    const rawResponseText = utils.languageModelChatMessagesToString([<vscode.LanguageModelChatMessage>chat.return().at(-1)]);
+    const response = this.parseResponse(rawResponseText);
+    const tactics = response ? await Tokenizer.get().tokenize(response, Scope.PROOF_BODY) : [];
 
-    const response = [];
-    for (const match of rawResponseText.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)) {
+    return {
+      response: tactics,
+      repair: (error: Oracle.Error) => {
+        return this.repair(chat, tactics, error, params, cancellationToken);
+      }
+    };
+  }
+    
+  async repair(chat: Chat, tactics: Token[], error: Oracle.Error, params?: Oracle.Params, cancellationToken?: vscode.CancellationToken) {
+    chat.continue(() => prompt2.render(tactics, error));
+        
+    const rawResponseText = utils.languageModelChatMessagesToString([<vscode.LanguageModelChatMessage>chat.return().at(-1)]);
+    const response = this.parseResponse(rawResponseText);
+    const newTactics = response ? await Tokenizer.get().tokenize(response, Scope.PROOF_BODY) : [];
+    
+    return {
+      response: newTactics,
+      repair: (newError: Oracle.Error) => {
+        return this.repair(chat, newTactics, newError, params, cancellationToken);
+      }
+    };
+  }
+
+  parseResponse(response: string) {
+    for (const match of response.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)) {
       let coqCode = match.groups?.coqCode;
       if (coqCode) {
         const proofBlockRegexRes = coqCode.match(/Proof\.(?<tactics>[\s\S]*)Qed\./m)?.groups;
@@ -22,10 +52,8 @@ export class BasicLLM extends Oracle {
         if (qedRegexRes) // Response ends in Qed.
           coqCode = qedRegexRes.tactics;
 
-        response.push(coqCode);
+        return coqCode;
       }
     }
-    
-    return response;
   }
 }

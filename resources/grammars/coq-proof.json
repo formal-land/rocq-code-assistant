@@ -61,9 +61,7 @@
       "end": "\\*\\)",
       "name": "comment.block.coq",
       "patterns": [
-        {
-          "include": "#block_comment"
-        }
+        { "include": "#block_comment" }
       ]
     }
   },
