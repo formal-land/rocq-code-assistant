@@ -3,8 +3,7 @@ import * as YAML from 'yaml';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { Commands } from '../../../extension';
-import { Tokenizer } from '../../../syntax/tokenizer';
-import { Scope } from '../../../syntax/scope';
+import * as utils from '../../../utils';
 import * as extractors from '../../../syntax/extractors';
 import { Proof } from '../../../proof/proof';
 import { NaturalLanguageDescription } from '../../../oracles/natural-language-description/oracle';
@@ -60,7 +59,11 @@ describe('miniF2F benchmark', () => {
           const fileDocument = await vscode.workspace.openTextDocument(fileUri);
           vscode.window.showTextDocument(fileDocument);
       
-          const selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4o');
+          let selectedModel, i = 0;
+          while (!selectedModel && i++ < 10) {
+            selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4o');
+            await utils.delay(1000);
+          }
           assert.notEqual(selectedModel, undefined);
       
           const textEditor = vscode.window.activeTextEditor;

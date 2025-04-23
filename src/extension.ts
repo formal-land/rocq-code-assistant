@@ -120,8 +120,9 @@ async function selectModelCallback(modelId?: string) {
       detail: modelQuickPickItemDetail(model) }));
 
   if (!modelId)
-    modelId = (await vscode.window.showQuickPick(quickPickItems))?.id;
-
+    if (models.length === 1) modelId = models[0].id;
+    else modelId = (await vscode.window.showQuickPick(quickPickItems))?.id;
+ 
   const pickedModel = models.find(model => model.id === modelId);
   if (pickedModel) selectedModel = pickedModel;
   
@@ -155,9 +156,6 @@ async function updateCustomOllamaLanguageModel() {
 
   const ollamaModelProvider = await ollama.create(modelMetadata.name, modelMetadata, host);
   registeredCustomModels.push(ollamaModelProvider);
-
-  if (registeredCustomModels.concat(await vscode.lm.selectChatModels()).length === 1)
-    selectedModel = registeredCustomModels[0];
 }
 
 async function updateCustomOpenAILanguageModel() {
@@ -179,9 +177,6 @@ async function updateCustomOpenAILanguageModel() {
   const openAIModelProvider = openAI.create(
     modelMetadata.name, modelMetadata, utils.getConfString('provider.openai.api-key-var-name', 'OPENAI_API_KEY'));
   registeredCustomModels.push(openAIModelProvider);
-
-  if (registeredCustomModels.concat(await vscode.lm.selectChatModels()).length === 1)
-    selectedModel = registeredCustomModels[0];
 }
 
 function didChangeConfigurationCallback(event: vscode.ConfigurationChangeEvent) {

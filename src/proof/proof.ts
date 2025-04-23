@@ -102,10 +102,10 @@ export class Proof {
   async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
     const workingBlocks = this.body.filter(element => element instanceof Proof.WorkingBlock);
     
-    await Promise.all(workingBlocks.map(async workingBlock => {
+    for (const workingBlock of workingBlocks) {
       await workingBlock.autocomplete(oracles, cancellationToken);
       this.merge(workingBlock);
-    }));
+    }
 
     if (!this.body.find(element => !element.petState)) {
       const lastElement = this.body.at(-1);
@@ -336,18 +336,17 @@ export namespace Proof {
      * @param cancellationToken
      */
     async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
-      const MAX_ATTEMPTS = 3;
+      const MAX_ATTEMPTS = 20;
       const answers = [];
       const oracleParams: Oracle.Params = {
         comment: this.metadata.comment
       };
       let attempts = 0;
       let goals;
+      let repairable;
       let error: Oracle.Error = { at: 0, message: '' };
   
       while ((goals = await this.goals()).length > 0 && (answers.length > 0 || attempts < MAX_ATTEMPTS)) {
-        let repairable;
-
         if (answers.length === 0) {
           if (attempts === 0) repairable = await oracles[0].query(goals[0], oracleParams, cancellationToken);
           else repairable = await (<Oracle.Repairable>repairable).repair(error);
@@ -362,9 +361,10 @@ export namespace Proof {
             error = { 
               at: tryResult.error.at, 
               message: tryResult.error.message };
-          if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS)))
+          if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS))) {
             this.accept();
-          else
+            console.log(attempts);
+          } else
             this.reject();
         }
       }
