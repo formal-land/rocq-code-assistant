@@ -10,7 +10,8 @@ The previous solution you provided do not work. Provide antoher one or try to re
 
   const errorPart = LanguageModelChatMessage.User(`\
 The error is as follows:
-At ${ tactics.at(error.at)?.value },
+At ${ tactics.at(error.at)?.value }
+
 ${ error?.message }`);
 
   messages.push(introPart);

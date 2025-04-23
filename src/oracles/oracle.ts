@@ -12,6 +12,23 @@ export abstract class Oracle {
   }
 
   abstract query(goal: Goal<PpString>, params: Oracle.Params, cancellationToken?: vscode.CancellationToken): Promise<Oracle.Repairable>
+
+  parseResponse(response: string) {
+    for (const match of response.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)) {
+      let coqCode = match.groups?.coqCode;
+      if (coqCode) {
+        const proofBlockRegexRes = coqCode.match(/Proof\.(?<tactics>[\s\S]*)Qed\./m)?.groups;
+        if (proofBlockRegexRes) // Response in Proof. ... Qed. block
+          coqCode = proofBlockRegexRes.tactics;
+
+        const qedRegexRes = coqCode.match(/(?<tactics>[\s\S]*)Qed\./m)?.groups;
+        if (qedRegexRes) // Response ends in Qed.
+          coqCode = qedRegexRes.tactics;
+
+        return coqCode;
+      }
+    }
+  }
 }
 
 export namespace Oracle {
