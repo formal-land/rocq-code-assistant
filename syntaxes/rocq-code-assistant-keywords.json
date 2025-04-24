@@ -14,7 +14,9 @@
         { "include": "#rocq_code_assistant_block_comment" },
         { "include": "#hint-keyword" },
         { "include": "#example-keyword" },
-        { "include": "#example" }
+        { "include": "#example" },
+        { "include": "#use-keyword" },
+        { "include": "#use" }
       ]
     },
     "hint-keyword": {
@@ -29,6 +31,21 @@
       "begin": "(?<=@example)",
       "end": "(?=@(.)+|\\*\\))",
       "name": "meta.comment.example.coq",
+      "patterns": [
+        {
+          "match": "(\\S+)?#\\S+\\ *$",
+          "name": "markup.underline.link.coq"
+        }
+      ]
+    },
+    "use-keyword": {
+      "match": "@use",
+      "name": "keyword.use.coq"
+    },
+    "use": {
+      "begin": "(?<=@use)",
+      "end": "(?=@(.)+|\\*\\))",
+      "name": "meta.comment.use.coq",
       "patterns": [
         {
           "match": "(\\S+)?#\\S+\\ *$",
