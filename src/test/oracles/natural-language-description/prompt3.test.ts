@@ -26,6 +26,10 @@ Proof.
   symmetry.
   apply eqb_eq.
 Qed.`
+        ],
+        uses: [
+          'Theorem restricted_excluded_middle : forall P b, (P <-> b = true) -> P \/ ~ P.',
+          'Theorem restricted_excluded_middle_eq : forall (n m : nat), n = m \/ n <> m.'
         ]
       }
     };

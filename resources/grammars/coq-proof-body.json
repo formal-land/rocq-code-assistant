@@ -34,22 +34,24 @@
         { "include": "#rocq_code_assistant_block_comment" },
         { "include": "#hint-keyword" },
         { "include": "#example-keyword" },
+        { "include": "#use-keyword" },
         { "include": "#hint" },
-        { "include": "#example" }
+        { "include": "#example" },
+        { "include": "#use" }
       ]
     },
     "hint-keyword": {
       "match": "@hint",
       "name": "keyword.hint.coq"
     },
-    "example-keyword": {
-      "match": "@example",
-      "name": "keyword.example.coq"
-    },
     "hint": {
       "begin": "(?<=@hint)",
       "end": "(?=@(.)+|\\*\\))",
       "name": "meta.comment.hint.coq"
+    },
+    "example-keyword": {
+      "match": "@example",
+      "name": "keyword.example.coq"
     },
     "example": {
       "begin": "(?<=@example)",
@@ -62,6 +64,25 @@
           "captures": {
             "1": { "name": "meta.comment.example.path.coq" },
             "2": { "name": "meta.comment.example.name.coq" }
+          }
+        }
+      ]
+    },
+    "use-keyword": {
+      "match": "@use",
+      "name": "keyword.use.coq"
+    },
+    "use": {
+      "begin": "(?<=@use)",
+      "end": "(?=@(.)+|\\*\\))",
+      "name": "meta.comment.use.coq",
+      "patterns": [
+        {
+          "match": "(\\S+)?#(\\S+)\\ *$",
+          "name": "markup.underline.link.coq",
+          "captures": {
+            "1": { "name": "meta.comment.use.path.coq" },
+            "2": { "name": "meta.comment.use.name.coq" }
           }
         }
       ]

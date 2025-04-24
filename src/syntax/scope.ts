@@ -18,8 +18,12 @@ export const enum Name {
   EXECUTABLE = 'meta.proof.body.executable.coq',
   HINT = 'meta.comment.hint.coq',
   EXAMPLE = 'meta.comment.example.coq',
+  USE = 'meta.comment.use.coq',
   HINT_KEYWORD = 'keyword.hint.coq',
   EXAMPLE_KEYWORD = 'keyword.example.coq',
   EXAMPLE_PATH = 'meta.comment.example.path.coq',
-  EXAMPLE_NAME = 'meta.comment.example.name.coq'
+  EXAMPLE_NAME = 'meta.comment.example.name.coq',
+  USE_KEYWORD = 'keyword.use.coq',
+  USE_PATH = 'meta.comment.use.path.coq',
+  USE_NAME = 'meta.comment.use.name.coq'
 }

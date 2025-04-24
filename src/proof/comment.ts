@@ -7,13 +7,15 @@ import * as extractors from '../syntax/extractors';
 export interface Comment {
   hints?: string[],
   examples?: string[];
+  uses?: string[];
 }
 
 export namespace Comment {
   export async function fromTokens(tokens: Token[], baseFilePath: string) {
     return {
       hints: hintsFromToken(tokens), 
-      examples: await examplesFromToken(tokens, baseFilePath)
+      examples: await examplesFromToken(tokens, baseFilePath),
+      uses: await usesFromToken(tokens, baseFilePath)
     };
   }
 
@@ -44,18 +46,52 @@ export namespace Comment {
           .slice(1)
           .filter(token => token.scopes.includes(Name.EXAMPLE_NAME))
           .map(token => token.value.trim())
-          .join(' ');
+          .join('');
         let exampleFilePath = exampleTokens
           .slice(1)
           .filter(token => token.scopes.includes(Name.EXAMPLE_PATH))
           .map(token => token.value.trim())
-          .join(' ');
+          .join('');
         if (exampleFilePath === '')
           exampleFilePath = path.basename(baseFilePath);
         const proofTokens = await extractors.extractProofTokensFromName(exampleProofName, path.join(path.dirname(baseFilePath), exampleFilePath));
   
         if (proofTokens) 
-          return proofTokens.map(token => token.value).join(' ');
+          return proofTokens.map(token => token.value).join('');
+        else return undefined;
+      }));
+  
+    return examples.filter(example => example !== undefined);
+  }
+
+  async function usesFromToken(tokens: Token[], baseFilePath: string) {
+    let usesTokens = tokens
+      .filter(token => token.scopes.includes(Name.USE) || token.scopes.includes(Name.USE_KEYWORD));
+    if (usesTokens.length === 0) return;
+
+    const examplesSplitIdx = usesTokens
+      .reduce((acc, token, idx) => token.scopes.includes(Name.USE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
+    const examples = await Promise.all(utils.split(usesTokens, examplesSplitIdx)
+      .map(async exampleTokens => {
+        const exampleProofName = exampleTokens
+          .slice(1)
+          .filter(token => token.scopes.includes(Name.USE_NAME))
+          .map(token => token.value.trim())
+          .join('');
+        let exampleFilePath = exampleTokens
+          .slice(1)
+          .filter(token => token.scopes.includes(Name.USE_PATH))
+          .map(token => token.value.trim())
+          .join('');
+        if (exampleFilePath === '')
+          exampleFilePath = path.basename(baseFilePath);
+        const proofTokens = await extractors.extractProofTokensFromName(exampleProofName, path.join(path.dirname(baseFilePath), exampleFilePath));
+  
+        if (proofTokens) 
+          return proofTokens
+            .filter(token => token.scopes.includes(Name.PROOF_HEAD))
+            .map(token => token.value)
+            .join('');
         else return undefined;
       }));
   
