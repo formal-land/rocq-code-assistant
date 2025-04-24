@@ -6,4 +6,5 @@ node_modules
 *.d.ts
 src/test/benchmarks/**/dataset/
 src/test/benchmarks/**/.vscode
+src/test/benchmarks/**/*.cache
 fix.md
