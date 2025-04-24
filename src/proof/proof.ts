@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as utils from '../utils';
-import { Token, Tokenizer } from '../syntax/tokenizer';
+import { Token } from '../syntax/tokenizer';
 import { PetState } from '../lib/coq-lsp/types';
 import { CoqLSPClient, Request } from '../coq-lsp-client';
-import { Name, Scope } from '../syntax/scope';
+import { Name } from '../syntax/scope';
 import { Oracle } from '../oracles/oracle';
 import { Comment } from './comment';
 
@@ -23,7 +23,7 @@ export class Proof {
   private static async init(name: string, type: string, metadata: Proof.Metadata, body: Token[], cancellationToken?: vscode.CancellationToken) {
     const startingState = await CoqLSPClient.get()
       .sendRequest(Request.Petanque.start, { uri: vscode.Uri.file(metadata.filePath).toString(), thm: name, pre_commands: null }, cancellationToken);
-    const workingBlock = new Proof.WorkingBlock(startingState, startingState, { comment: { hints: [], examples: [] } });
+    const workingBlock = new Proof.WorkingBlock(startingState, startingState, { comment: {} });
     const proof = new Proof(name, type, [workingBlock], metadata);
     const tryResult = await workingBlock.try(body, cancellationToken);
     
@@ -39,8 +39,8 @@ export class Proof {
     proof.body
       .filter(element => element instanceof Proof.WorkingBlock)
       .forEach((element, idx) => element.metadata.comment = {
-        hints: proof.metadata.comments[idx] ? proof.metadata.comments[idx].hints : [],
-        examples: proof.metadata.comments[idx] ? proof.metadata.comments[idx].examples : []
+        hints: proof.metadata.comments[idx]?.hints,
+        examples: proof.metadata.comments[idx]?.examples
       });
 
     return proof;
@@ -246,9 +246,9 @@ export namespace Proof {
     async try(tokens: Token[], cancellationToken?: vscode.CancellationToken) {
       let result = WorkingBlock.TryResult.success();
 
-      tokens = WorkingBlock.normalize(tokens);
+      const normTokens = WorkingBlock.normalize(tokens);
 
-      for (const [idx, token] of tokens.entries()) {            
+      for (const token of normTokens) {            
         const execPetState = this.elements.at(-1)?.petState;
         let newPetState;
         if (token.scopes.includes(Name.EXECUTABLE)) {
@@ -257,7 +257,7 @@ export namespace Proof {
               newPetState = await CoqLSPClient.get()
                 .sendRequest(Request.Petanque.run, { st: execPetState.st, tac: token.value }, cancellationToken);
             } catch (error) {
-              result = WorkingBlock.TryResult.failure(error as Error, idx);
+              result = WorkingBlock.TryResult.failure(error as Error, tokens.findIndex(_token => _token.range === token.range));
             }
           }
         } else {

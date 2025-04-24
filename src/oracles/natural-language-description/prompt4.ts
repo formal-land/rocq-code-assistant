@@ -9,10 +9,9 @@ export function render(tactics: Token[], error: Oracle.Error) {
 The previous solution you provided do not work. Provide antoher one or try to repair it.');
 
   const errorPart = LanguageModelChatMessage.User(`\
-The error is as follows:
-At ${ tactics.at(error.at)?.value }
-
-${ error?.message }`);
+This is a complete description of the error:
+- At: ${ tactics.at(error.at)?.value }
+- Message: ${ error?.message }`);
 
   messages.push(introPart);
   if (error) messages.push(errorPart);

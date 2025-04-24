@@ -79,7 +79,7 @@ describe('miniF2F benchmark', () => {
             throw new Error('Theorem not found.');
           }
           
-          const proof = await Proof.fromTokens(fileUri.toString(), proofTokens);
+          const proof = await Proof.fromTokens(textEditor.document.uri.fsPath, proofTokens);
           const success = await proof.autocomplete([new NaturalLanguageDescription(selectedModel as vscode.LanguageModelChat)]);
 
           assert.ok(success, 'Proof not found.');

@@ -12,7 +12,7 @@ Translate the natural language description of the proof in Coq code.
 - Output only the sequence of valid Coq tactics required to solve the goal.  
 - Do not include explanations, comments, imports, theorem definitions or any additional text.  
 - Ensure no steps are omitted and the proof is complete in every part.  
-- The output must be directly executable by Coq without any modifications and must correctly reference\
+- The output must be directly executable by Coq without any modifications and must correctly reference \
   all the variables and hypotheses names used in the Coq goal definition.
 - Format the solution in a Markdown code block that starts with \`\`\`coq and ends with \`\`\`.`);
 
@@ -21,7 +21,7 @@ Translate the natural language description of the proof in Coq code.
   
   const hintsPart = LanguageModelChatMessage.User(`\
 These hints may help you to solve the goal. Please, use them if you find them useful.
-${hintsListPart?.length ? hintsListPart.join('\n') : ''}`);
+${hintsListPart?.length ? hintsListPart.join('\n') : '' }`);
 
   const examplesListPart = params?.comment?.examples
     ?.map(example => `- ${ example }`)

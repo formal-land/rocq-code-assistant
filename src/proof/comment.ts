@@ -5,8 +5,8 @@ import * as utils from '../utils';
 import * as extractors from '../syntax/extractors';
 
 export interface Comment {
-  hints: string[],
-  examples: string[];
+  hints?: string[],
+  examples?: string[];
 }
 
 export namespace Comment {
@@ -18,7 +18,10 @@ export namespace Comment {
   }
 
   function hintsFromToken(tokens: Token[]) {
-    const hintsTokens = tokens.filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
+    const hintsTokens = tokens
+      .filter(token => token.scopes.includes(Name.HINT) || token.scopes.includes(Name.HINT_KEYWORD));
+    if (hintsTokens.length === 0) return;
+    
     const hintsSplitIdx = hintsTokens.reduce((acc, token, idx) => token.scopes.includes(Name.HINT_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
     const hints = utils.split(hintsTokens, hintsSplitIdx)
       .map(hintTokens => hintTokens
@@ -31,6 +34,8 @@ export namespace Comment {
   async function examplesFromToken(tokens: Token[], baseFilePath: string) {
     let examplesTokens = tokens
       .filter(token => token.scopes.includes(Name.EXAMPLE) || token.scopes.includes(Name.EXAMPLE_KEYWORD));
+    if (examplesTokens.length === 0) return;
+
     const examplesSplitIdx = examplesTokens
       .reduce((acc, token, idx) => token.scopes.includes(Name.EXAMPLE_KEYWORD) ? [...acc, idx] : acc, [] as number[]);
     const examples = await Promise.all(utils.split(examplesTokens, examplesSplitIdx)
