@@ -336,7 +336,7 @@ export namespace Proof {
      * @param cancellationToken
      */
     async autocomplete(oracles: Oracle[], cancellationToken?: vscode.CancellationToken) {
-      const MAX_ATTEMPTS = 20;
+      const MAX_ATTEMPTS = 5;
       const answers = [];
       const oracleParams: Oracle.Params = {
         comment: this.metadata.comment

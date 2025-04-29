@@ -61,10 +61,10 @@ describe('miniF2F benchmark', () => {
       
           let selectedModel, i = 0;
           while (!selectedModel && i++ < 10) {
-            selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4o');
+            selectedModel = await vscode.commands.executeCommand(Commands.SELECT_MODEL, 'gpt-4');
             await utils.delay(1000);
           }
-          assert.notEqual(selectedModel, undefined);
+          assert.notEqual(selectedModel, undefined, 'Cannot select model gpt-4');
       
           const textEditor = vscode.window.activeTextEditor;
           if (!textEditor) {

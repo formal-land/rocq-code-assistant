@@ -19,6 +19,7 @@ export class NaturalLanguageDescription extends Oracle {
     
     const rawResponseText = utils.languageModelChatMessageToString(<vscode.LanguageModelChatMessage>chat.return().at(-1));
     const response = this.parseResponse(rawResponseText);
+    if (!response) throw new Error('No response from the Language Model');
     const tactics = response ? await Tokenizer.get().tokenize(response, Scope.PROOF_BODY) : [];
 
     return {

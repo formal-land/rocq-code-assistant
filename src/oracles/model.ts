@@ -15,8 +15,7 @@ export class Chat {
   async continue(continuation: (response: string, history: vscode.LanguageModelChatMessage[]) => vscode.LanguageModelChatMessage[]) {
     let lastMessage = this.history.at(-1);
     if (!lastMessage) lastMessage = vscode.LanguageModelChatMessage.User('');
-    const lastResponse = utils.languageModelChatMessagesToString([lastMessage]);
-    if (!lastResponse) throw new Error('No response to continue');
+    const lastResponse = utils.languageModelChatMessageToString(lastMessage);
 
     const newMessages = continuation(lastResponse, this.history); 
     const response = await this.model.sendRequest([...this.history, ...newMessages], this.cancellationToken);
