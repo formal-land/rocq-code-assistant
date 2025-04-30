@@ -3,7 +3,7 @@ import * as utils from '../utils';
 import { Token } from '../syntax/tokenizer';
 import { PetState } from '../lib/coq-lsp/types';
 import { CoqLSPClient, Request } from '../coq-lsp-client';
-import { Name } from '../syntax/scope';
+import { Name, Scope } from '../syntax/scope';
 import { Oracle } from '../oracles/oracle';
 import { Comment } from './comment';
 
@@ -86,13 +86,13 @@ export class Proof {
         return associatedComment ? Comment.fromTokens(associatedComment, filePath) : undefined;
       }));
       
-    const editorLocation = new vscode.Range(
-      tokens[0].range.start.line, 
-      tokens[0].range.start.character, 
-      tokens[tokens.length - 1].range.end.line, 
-      tokens[tokens.length - 1].range.end.character);
+    const bodyEditorLocation = new vscode.Range(
+      bodyTokens[0].range.start.line, 
+      bodyTokens[0].range.start.character, 
+      bodyTokens[bodyTokens.length - 1].range.end.line, 
+      bodyTokens[bodyTokens.length - 1].range.end.character);
         
-    return Proof.init(name, type, { keyword, filePath, editorLocation, comments }, bodyTokens, cancellationToken);
+    return Proof.init(name, type, { keyword, filePath, bodyEditorLocation, comments }, bodyTokens, cancellationToken);
   }
 
   private merge(workingBlock: Proof.WorkingBlock) {
@@ -145,7 +145,7 @@ export namespace Proof {
     /**
      * Location of the proof in the edited file.
      */
-    editorLocation: vscode.Range,
+    bodyEditorLocation: vscode.Range,
 
     comments: (Comment | undefined)[]
   }

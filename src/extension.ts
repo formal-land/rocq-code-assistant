@@ -45,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
       }
       
       if (textEditor)
-        textEditor.edit(edit => edit.replace(proof.metadata.editorLocation, ppProof));
+        textEditor.edit(edit => edit.replace(proof.metadata.bodyEditorLocation, ppProof));
       else return false;
 
       return true;
@@ -90,7 +90,7 @@ async function solveCallback(textEditor?: vscode.TextEditor, edit?: vscode.TextE
 
   const proof = await Proof.fromTokens(resource ? resource.fsPath : textEditor.document.uri.fsPath, proofTokens, cancellationToken);
   const success = await proof.autocomplete([new NaturalLanguageDescription(selectedModel as vscode.LanguageModelChat)], cancellationToken);
-  const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
+  const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.body.toString());
   return { proof, ppProof, success };
 }
 
