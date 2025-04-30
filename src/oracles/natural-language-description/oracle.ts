@@ -31,7 +31,7 @@ export class NaturalLanguageDescription extends Oracle {
   }
 
   private async repair(chat: Chat, tactics: Token[], error: Oracle.Error, params?: Oracle.Params, cancellationToken?: vscode.CancellationToken) {
-    chat.continue(() => prompt4.render(tactics, error));
+    await chat.continue(() => prompt4.render(tactics, error));
     
     const rawResponseText = utils.languageModelChatMessageToString(<vscode.LanguageModelChatMessage>chat.return().at(-1));
     const response = this.parseResponse(rawResponseText);

@@ -363,7 +363,6 @@ export namespace Proof {
               message: tryResult.error.message };
           if (tryResult.status || (!tryResult.status && (answers.length === 0 && attempts === MAX_ATTEMPTS))) {
             this.accept();
-            console.log(attempts);
           } else
             this.reject();
         }

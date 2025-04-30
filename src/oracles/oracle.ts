@@ -25,6 +25,10 @@ export abstract class Oracle {
     if (qedRegexRes) // Response ends in Qed.
       coqCode = qedRegexRes.tactics;
 
+    const admittedRegexRes = coqCode.match(/(?<tactics>[\s\S]*)Admitted\./m)?.groups;
+    if (admittedRegexRes) // Response ends in Admitted.
+      coqCode = admittedRegexRes.tactics;
+
     return coqCode;
   }
 }

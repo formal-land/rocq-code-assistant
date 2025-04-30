@@ -2,9 +2,10 @@ import * as assert from 'assert';
 import * as YAML from 'yaml';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { Commands } from '../../../extension';
 import * as utils from '../../../utils';
 import * as extractors from '../../../syntax/extractors';
+import * as Prettier from '../../../syntax/prettier/prettier';
+import { Commands } from '../../../extension';
 import { Proof } from '../../../proof/proof';
 import { NaturalLanguageDescription } from '../../../oracles/natural-language-description/oracle';
 import { shuffle } from '../../../utils';
@@ -81,6 +82,10 @@ describe('miniF2F benchmark', () => {
           
           const proof = await Proof.fromTokens(textEditor.document.uri.fsPath, proofTokens);
           const success = await proof.autocomplete([new NaturalLanguageDescription(selectedModel as vscode.LanguageModelChat)]);
+          const ppProof = await Prettier.pp(selectedModel as vscode.LanguageModelChat, proof.toString());
+
+          console.log(ppProof);
+          console.log('=================================');
 
           assert.ok(success, 'Proof not found.');
         }

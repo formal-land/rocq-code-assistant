@@ -35,7 +35,6 @@ export class Model {
   }
 
   async sendRequest(messages: vscode.LanguageModelChatMessage[], cancellationToken?: vscode.CancellationToken) {
-    console.log(utils.languageModelChatMessagesToString(messages));
     const rawResponse = await this.model.sendRequest(messages, {}, cancellationToken);
     const fragments = [];
     for await (const fragment of rawResponse.text)

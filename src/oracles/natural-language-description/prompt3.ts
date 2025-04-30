@@ -11,7 +11,8 @@ Translate the natural language description of the proof in Coq code.
 - Keep the translated code as simple and direct as possible.  
 - Output only the sequence of valid Coq tactics required to solve the goal.  
 - Do not include explanations, comments, imports, theorem definitions or any additional text.  
-- Ensure no steps are omitted and the proof is complete in every part.  
+- Ensure no steps are omitted and the proof is complete in every part.
+- Do not omit any step by replacing it with comments.
 - The output must be directly executable by Coq without any modifications and must correctly reference \
   all the variables and hypotheses names used in the Coq goal definition.
 - Format the solution in a Markdown code block that starts with \`\`\`coq and ends with \`\`\`.`);
