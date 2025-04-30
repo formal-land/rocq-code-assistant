@@ -1,5 +1,5 @@
 import { LanguageModelChatMessage } from 'vscode';
-import { Goal, PpString } from '../../lib/coq-lsp/types';
+import { Goal, PpString } from '../../../lib/coq-lsp/types';
 
 export function render(goal: Goal<PpString>) {
   const messages: LanguageModelChatMessage[] = [];

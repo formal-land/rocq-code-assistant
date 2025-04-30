@@ -1,5 +1,5 @@
 import { LanguageModelChatMessage } from 'vscode';
-import { Oracle } from '../oracle';
+import { Oracle } from '../../oracle';
 
 export function render(params?: Oracle.Params) {
   const messages: LanguageModelChatMessage[] = [];

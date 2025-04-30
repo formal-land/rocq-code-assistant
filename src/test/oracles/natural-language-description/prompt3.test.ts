@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as utils from '../../../utils';
-import * as prompt3 from '../../../oracles/natural-language-description/prompt3';
+import * as prompt3 from '../../../oracles/natural-language-description/prompts/translation';
 
 suite('Prompt3 Test Suite', () => {
   test('Complete', () => {

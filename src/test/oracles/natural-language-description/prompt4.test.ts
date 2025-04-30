@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as utils from '../../../utils';
-import * as prompt4 from '../../../oracles/natural-language-description/prompt4';
+import * as prompt4 from '../../../oracles/natural-language-description/prompts/incorrect';
 import { Token } from '../../../syntax/tokenizer';
 
 suite('Prompt4 Test Suite', () => {

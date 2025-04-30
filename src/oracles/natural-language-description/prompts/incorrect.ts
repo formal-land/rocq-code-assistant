@@ -1,6 +1,6 @@
 import { LanguageModelChatMessage } from 'vscode';
-import { Token } from '../../syntax/tokenizer';
-import { Oracle } from '../oracle';
+import { Token } from '../../../syntax/tokenizer';
+import { Oracle } from '../../oracle';
 
 export function render(tactics: Token[], error: Oracle.Error) {
   const messages: LanguageModelChatMessage[] = [];
