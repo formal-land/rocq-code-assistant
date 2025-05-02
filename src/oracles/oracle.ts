@@ -14,7 +14,10 @@ export abstract class Oracle {
   abstract query(goal: Goal<PpString>, params: Oracle.Params, cancellationToken?: vscode.CancellationToken): Promise<Oracle.Repairable>
 
   parseResponse(response: string) {
-    let coqCode = [...response.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)][0].groups?.coqCode;
+    let match = [...response.matchAll(/```coq(?<coqCode>[\s\S]*?)```/gm)].at(0);
+    if (!match) return null;
+    
+    let coqCode = match.groups?.coqCode;
     if (!coqCode) return null;
 
     const proofBlockRegexRes = coqCode.match(/Proof\.(?<tactics>[\s\S]*)Qed\./m)?.groups;
