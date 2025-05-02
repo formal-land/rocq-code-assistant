@@ -14,7 +14,7 @@ But not repeat the same solution.
 **Instructions:**  
 - Keep the code as simple and direct as possible.  
 - Output only the sequence of valid Coq tactics required to solve the goal.  
-- Do not include explanations, comments, imports, theorem definitions or any additional text.  
+- Do not include explanations, imports, theorem definitions or any additional text.  
 - Ensure no steps are omitted and the proof is complete in every part.
 - Do not omit any step.
 - Do not use admit.
